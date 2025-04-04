@@ -90,7 +90,6 @@ public class GameScreen implements Screen, InputProcessor  {
     @Override
     public boolean scrolled(float amountX, float amountY) { return false; }
 
-
     @Override
     public void resize(int width, int height) {}
 

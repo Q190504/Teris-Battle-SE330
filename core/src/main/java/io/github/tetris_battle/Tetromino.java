@@ -7,7 +7,9 @@ import com.badlogic.gdx.utils.Array;
 
 public class Tetromino {
     private Array<int[]> shape;
+    private Array<int[]> initialShape;
     private int row, col, type;
+    private int rotationState;
 
     public static final int[][][] SHAPES = {
         {{1, 1, 1, 1}}, // I
@@ -32,22 +34,30 @@ public class Tetromino {
         }
     }
 
-
     public Tetromino(int type) {
         this.type = type;
         this.shape = convertToArray(SHAPES[type]);
+        this.initialShape = convertToArray(SHAPES[type]);
         this.row = 0;
-        this.col = 4 - shape.get(0).length / 2;
+        this.col = 0;
+        this.rotationState = 0;
     }
 
     public Tetromino(Array<int[]> shape, int row, int col) {
         this.shape = shape;
+        this.initialShape = shape;
         this.row = row;
         this.col = col;
     }
 
     public Tetromino clonePiece() {
-        return new Tetromino(new Array<>(shape), row, col);
+        Tetromino clone = new Tetromino(type);
+        clone.shape = convertToArray(shape.toArray(int[].class));
+        clone.initialShape = shape;
+        clone.row = this.row;
+        clone.col = this.col;
+        clone.rotationState = this.rotationState;
+        return clone;
     }
 
     public Array<int[]> getShape() {
@@ -62,6 +72,14 @@ public class Tetromino {
         return col;
     }
 
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public void setCol(int col) {
+        this.col = col;
+    }
+
     public int getType() {
         return type;
     }
@@ -71,26 +89,47 @@ public class Tetromino {
     }
 
     public void drop() {
-        this.row++;
+        this.row--;
     }
 
     public void rotate() {
-        int rows = shape.size;
-        int cols = shape.get(0).length;
+        rotationState = (rotationState + 1) % 4;
+        int rows = initialShape.size;
+        int cols = initialShape.get(0).length;
         Array<int[]> rotated = new Array<>();
 
-        for (int j = 0; j < cols; j++) {
-            int[] newRow = new int[rows];
-            for (int i = 0; i < rows; i++) {
-                newRow[i] = shape.get(rows - 1 - i)[j];
+        if (rotationState == 0) {
+            rotated = convertToArray(initialShape.toArray(int[].class));
+        } else if (rotationState == 1) {
+            for (int j = 0; j < cols; j++) {
+                int[] newRow = new int[rows];
+                for (int i = 0; i < rows; i++) {
+                    newRow[i] = shape.get(rows - 1 - i)[j];
+                }
+                rotated.add(newRow);
             }
-            rotated.add(newRow);
+        } else if (rotationState == 2) {
+            for (int i = 0; i < rows; i++) {
+                int[] newRow = new int[cols];
+                for (int j = 0; j < cols; j++) {
+                    newRow[j] = initialShape.get(rows - 1 - i)[cols - 1 - j];
+                }
+                rotated.add(newRow);
+            }
+        } else if (rotationState == 3) {
+            for (int j = 0; j < cols; j++) {
+                int[] newRow = new int[rows];
+                for (int i = 0; i < rows; i++) {
+                    newRow[i] = initialShape.get(i)[cols - 1 - j];
+                }
+                rotated.add(newRow);
+            }
         }
 
         shape = rotated;
     }
 
-    public void draw(ShapeRenderer shapeRenderer, int posX, int posY) {
+    public void draw(ShapeRenderer shapeRenderer, int posX, int posY, int rows) {
         shapeRenderer.setColor(getColorByType(this.type));
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {

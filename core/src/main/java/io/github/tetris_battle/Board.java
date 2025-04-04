@@ -40,14 +40,40 @@ public class Board {
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {
                 if (shape.get(i)[j] == 1) {
-                    grid[row + i][col + j] = piece.getType();
+                    int targetRow = row + i;
+                    int targetCol = col + j;
+
+                    if (targetRow >= 0 && targetRow < ROWS && targetCol >= 0 && targetCol < COLS) {
+                        if (grid[targetRow][targetCol] != -1) {
+                            grid[targetRow][targetCol] = piece.getType();
+                        }
+                    } else {
+                        Gdx.app.log("PlacePiece", "Out of bounds at row: " + targetRow + ", col: " + targetCol);
+                    }
+
+//                    if (targetRow < 0 || targetRow >= ROWS || targetCol < 0 || targetCol >= COLS) {
+//                        Gdx.app.log("PlacePiece", "Out of bounds at row: " + targetRow + ", col: " + targetCol);
+//                        return;
+//                    }
+//                    if (grid[targetRow][targetCol] != -1) {
+//                        Gdx.app.log("PlacePiece", "Overlap detected at row: " + targetRow + ", col: " + targetCol);
+//                        return;
+//                    }
+                }
+            }
+        }
+        for (int i = 0; i < shape.size; i++) {
+            for (int j = 0; j < shape.get(i).length; j++) {
+                if (shape.get(i)[j] == 1) {
+                    int targetRow = row + i;
+                    int targetCol = col + j;
+                    grid[targetRow][targetCol] = piece.getType();
                 }
             }
         }
         clearFullRows();
         currentRunningPiece = null;
     }
-
 
     public void clearFullRows() {
         for (int i = 0; i < ROWS; i++) {
@@ -59,12 +85,12 @@ public class Board {
                 }
             }
             if (fullRow) {
-                for (int k = i; k > 0; k--) {
-                    grid[k] = grid[k - 1].clone();
+                for (int k = i; k < ROWS - 1; k++) {
+                    grid[k] = grid[k + 1].clone();
                 }
-                grid[0] = new int[COLS];
+                grid[ROWS - 1] = new int[COLS];
                 for (int j = 0; j < COLS; j++) {
-                    grid[0][j] = -1;
+                    grid[ROWS - 1][j] = -1;
                 }
                 scoreManager.score();
             }
@@ -113,8 +139,18 @@ public class Board {
     public void spawnPiece() {
         currentRunningPiece = TetrominoSpawner.getInstance().getTetromino(currentIndex);
         currentIndex++;
+        Gdx.app.log("SpawnPiece", "Current index: " + (ROWS - currentRunningPiece.getShape().size));
+
+        int spawnRow = ROWS - currentRunningPiece.getShape().size;
+        int spawnCol = (COLS - currentRunningPiece.getShape().get(0).length) / 2 + 1;
+        currentRunningPiece.setRow(spawnRow);
+        currentRunningPiece.setCol(spawnCol);
+
         if (CollisionChecker.getInstance().checkCollision(currentRunningPiece, this)) {
+            Gdx.app.log("SpawnPiece", spawnRow + "," + spawnCol);
+
             isFull = true;
+            currentRunningPiece = null;
         }
     }
 
@@ -157,7 +193,10 @@ public class Board {
         }
 
         if (currentRunningPiece != null) {
-            currentRunningPiece.draw(shapeRenderer, posX, posY);
+            int drawY = currentRunningPiece.getRow() * 30 + posY;
+            Gdx.app.log("Draw", "Drawing piece at row: " + currentRunningPiece.getRow() +
+                ", col: " + currentRunningPiece.getCol() + ", y: " + drawY);
+            currentRunningPiece.draw(shapeRenderer, posX, posY, ROWS);
         }
     }
 }
