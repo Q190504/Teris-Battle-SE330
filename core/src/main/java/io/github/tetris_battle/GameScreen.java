@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
 
-public class GameScreen implements Screen, InputProcessor  {
+public class GameScreen implements Screen, InputProcessor, HandleMessageScreen  {
     private final int ROWS = 20, COLS = 10, SIZE = 30;
     private Board board = new Board(ROWS, COLS, Side.LEFT);
     private Board board2 = new Board(ROWS, COLS, Side.RIGHT);
@@ -108,5 +108,10 @@ public class GameScreen implements Screen, InputProcessor  {
     @Override
     public void dispose() {
         shapeRenderer.dispose();
+    }
+
+    @Override
+    public void HandleMessage(String msg) {
+
     }
 }
