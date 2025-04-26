@@ -1,4 +1,4 @@
-package io.github.tetris_battle;
+package io.github.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
@@ -7,6 +7,8 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import java.util.UUID;
+
+import io.github.tetris_battle.*;
 
 public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
@@ -103,7 +105,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         singlePlayerBtn.addListener(e -> {
             if (singlePlayerBtn.isPressed() && !singlePlayerBtn.isDisabled()) {
                 singlePlayerBtn.setDisabled(true);
-                main.setScreen(new GameScreen());
+                main.setScreen(new GameScreen(main, new TetrominoSpawner(), new HealthBar()));
             }
             return true;
         });
@@ -127,10 +129,14 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
     @Override
     public void HandleMessage(String msg) {
-        if (msg.startsWith("room_created:")) {
+        System.out.println(msg);
+        if (msg.startsWith("approved:")) {
             String roomId = msg.split(":")[1];
             main.setScreen(new RoomScreen(main, roomId));
-        } else if (msg.equals("no_conn")) {
+        } else if (msg.startsWith("room_created:")) {
+            String roomId = msg.split(":")[1];
+            main.setScreen(new RoomScreen(main, roomId));
+        }  else if (msg.equals("no_conn")) {
             setStatusLabel("Connection lost. Trying to reconnect...");
             disableAllButtons();
 

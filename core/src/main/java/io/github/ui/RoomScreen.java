@@ -1,4 +1,4 @@
-package io.github.tetris_battle;
+package io.github.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
+import io.github.tetris_battle.*;
 public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
 
     private Main main;
@@ -31,9 +32,12 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
             stage = new Stage(new ScreenViewport());
             skin = new Skin(Gdx.files.internal("assets\\uiskin.json")); // Make sure you have a uiskin!
 
+            Gdx.input.setInputProcessor(stage);
+
             Table table = new Table();
             table.setFillParent(true);
             table.center();
+            TextButton startBtn = new TextButton("Start Game", skin);
 
             roomIdLabel = new Label("Room ID: " + roomId, skin);  // Display the room ID
             statusLabel = new Label("", skin);
@@ -42,7 +46,16 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
             table.add(roomIdLabel).colspan(2).padBottom(20).row();
             table.add(new Label("Pending Join Requests", skin)).colspan(2).padBottom(10).row();
             table.add(joinRequestsTable).colspan(2).width(300).height(200).pad(10).row();
+            table.add(startBtn).colspan(2).pad(10).row();
             table.add(statusLabel).colspan(2).padTop(20);
+
+            startBtn.addListener(e -> {
+                if (startBtn.isPressed() && !startBtn.isDisabled()) {
+                    startBtn.setDisabled(true);
+                    Main.client.send("start");
+                }
+                return true;
+            });
 
             stage.addActor(table);
         });
@@ -53,15 +66,16 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
         Gdx.app.postRunnable(() -> {
             // Create a new row for the request and its "Accept" button
             Table requestRow = new Table();
-            Label requestLabel = new Label(request, skin);
+            String[] parts = request.split(":");
+            Label requestLabel = new Label(parts[0], skin);
             TextButton acceptBtn = new TextButton("Accept", skin);
 
             // Add listener for the accept button
             acceptBtn.addListener(e -> {
-                if (acceptBtn.isPressed()) {
-                    // Send acceptance message to server
-                    Main.client.send("accept:" + request);
-                    statusLabel.setText("Accepted request: " + request);
+                if (acceptBtn.isPressed() && !acceptBtn.isDisabled()) {
+                    acceptBtn.setDisabled(true);
+                    Main.client.send("accept:" + parts[1]);
+                    statusLabel.setText("Accepted request: " + parts[0]);
 
                     // Remove the request from the table
                     joinRequestsTable.removeActor(requestRow);
@@ -80,6 +94,7 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
 
     @Override
     public void render(float delta) {
+        if(stage == null) return;
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
@@ -97,6 +112,10 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen{
         if (msg.startsWith("join_request:")) {
             String joinId = msg.substring("join_request:".length());
             addJoinRequest(joinId);
+        } else if (msg.startsWith("game_start:")) {
+            Gdx.app.postRunnable(() -> {
+                main.setScreen(new MultiPlayerGameScreen(main, new HealthBar(), roomId));
+            });
         }
     }
 }
