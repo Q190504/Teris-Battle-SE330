@@ -2,6 +2,7 @@ package io.github.tetris_battle;
 
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import io.github.data.TetrominoDTO;
 
 public class TetrominoSpawner {
     private Array<Integer> bagQueue = new Array<>();
@@ -30,17 +31,38 @@ public class TetrominoSpawner {
 
         int minIndex = getMinIndexFromBoardBucket();
 
-        if (minIndex >= 0 && minIndex < bagQueue.size) {
+        if (minIndex >= 0 && minIndex < bagQueue.size)
+        {
             bagQueue.removeRange(0, minIndex);
-            if (Gdx.app != null) {
+            if (Gdx.app != null)
+            {
                 Gdx.app.log("TetrominoSpawner", "Removed elements from bagQueue up to index " + minIndex);
             }
         }
-        if (Gdx.app != null) {
+        if (Gdx.app != null)
+        {
             Gdx.app.log("TetrominoSpawner", "Spawned new piece at index " + index);
         }
         return new Tetromino(bagQueue.get(index));
     }
+
+    public Tetromino peekNextTetromino(int currentIndex) {
+        if (bagQueue.isEmpty()) {
+            shuffleBag();
+            if (Gdx.app != null) {
+                Gdx.app.log("TetrominoSpawner", "Shuffled new bag because queue was empty (peek).");
+            }
+        }
+
+        if (bagQueue.size > 1) {
+            return new Tetromino(bagQueue.get(currentIndex + 1)); // Peek at the NEXT piece
+        } else {
+            // If there's only one piece, shuffle and peek at the first
+            shuffleBag();
+            return new Tetromino(bagQueue.get(0));
+        }
+    }
+
 
     // Helper function to get the minimum index from boardBucket
     private int getMinIndexFromBoardBucket() {

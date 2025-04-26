@@ -6,7 +6,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
-import io.github.room.Room;
+import com.badlogic.gdx.utils.Array;
 import io.github.ui.HandleMessageScreen;
 
 public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
@@ -48,7 +48,58 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         board.draw(shapeRenderer, 0, 30);
         board2.draw(shapeRenderer, COLS * SIZE + SIZE, 30);
         healthBar.draw(shapeRenderer, 0, 0);
+
         shapeRenderer.end();
+
+        // Draw Next Tetrominos Preview
+        Tetromino board1NextPiece = board.getNextTetromino();
+        Tetromino board2NextPiece = board.getNextTetromino();
+
+        if (board1NextPiece != null) {
+            int previewXPos = COLS * SIZE / 2 - 2 * SIZE;
+            int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
+            int previewWidth = SIZE * 6;
+            int previewHeight = SIZE * 5;
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            // Draw border box
+            shapeRenderer.setColor(1, 1, 1, 1); // white border
+            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
+            shapeRenderer.end();
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            // Draw the next tetromino
+            shapeRenderer.setColor(Tetromino.getColorByType(board1NextPiece.getType()));
+            board1NextPiece.draw(shapeRenderer, previewXPos, previewYPos, ROWS);
+            shapeRenderer.end();
+
+            if (Gdx.app != null) {
+                Gdx.app.log("GameScreen", "nextPiece (board 1): " + board1NextPiece.getType());
+            }
+        }
+
+        if (board2NextPiece != null) {
+            int previewXPos = COLS * SIZE * 3 / 2 - SIZE;
+            int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
+            int previewWidth = SIZE * 6;
+            int previewHeight = SIZE * 5;
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            // Draw border box
+            shapeRenderer.setColor(1, 1, 1, 1); // white border
+            shapeRenderer.rect(previewXPos - (float) previewWidth /4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
+            shapeRenderer.end();
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            // Draw the next tetromino
+            shapeRenderer.setColor(Tetromino.getColorByType(board2NextPiece.getType()));
+            board2NextPiece.draw(shapeRenderer, previewXPos, previewYPos, ROWS);
+            shapeRenderer.end();
+
+            if (Gdx.app != null) {
+                Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
+            }
+        }
 
 //        // Draw grids for both boards
 //        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -92,7 +143,6 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 //
 //        shapeRenderer.end();
 
-
         // Draw borders
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         // Set border color
@@ -108,10 +158,10 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw right board border
         shapeRenderer.rect(
-            COLS * SIZE,      // x (space between boards = SIZE)
-            30,                         // y
-            COLS * SIZE,          // width
-            ROWS * SIZE                 // height
+            COLS * SIZE + SIZE,                  // x (space between boards = SIZE)
+            30,                              // y
+            COLS * SIZE + SIZE * 1,          // width
+            ROWS * SIZE                      // height
         );
 
         shapeRenderer.end();

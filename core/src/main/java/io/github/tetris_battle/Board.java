@@ -16,6 +16,8 @@ public class Board {
     private String roomId;
     private Tetromino currentRunningPiece = null;
     private int currentIndex = 0;
+    private Tetromino nextRunningPiece = null;
+    private int nextIndex = 0;
     private float spawnTimer = 0f; // Tracks time since last spawn
     private final float SPAWN_DELAY = 1.0f; // Spawn a new piece every 1 second
 
@@ -45,6 +47,8 @@ public class Board {
     public Tetromino getCurrentRunningPiece() {
         return currentRunningPiece;
     }
+
+    public Tetromino getNextTetromino() { return nextRunningPiece; }
 
     public void placePiece(Tetromino piece) {
         Array<int[]> shape = piece.getShape();
@@ -152,6 +156,7 @@ public class Board {
     public void spawnPiece() {
         if (spawner != null) {
             Tetromino piece = spawner.getTetromino(currentIndex);
+            nextRunningPiece = spawner.peekNextTetromino(currentIndex);
             handleSpawn(piece);
         } else {
             Main.client.send("request_piece:" + currentIndex);
