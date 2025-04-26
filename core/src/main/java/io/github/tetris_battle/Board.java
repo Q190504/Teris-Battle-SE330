@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import io.github.data.TetrominoDTO;
 
 public class Board {
     private final int ROWS;
@@ -11,12 +12,14 @@ public class Board {
     private int[][] grid;
     private boolean isFull = false;
     private ScoreManager scoreManager;
+    private TetrominoSpawner spawner;
+    private String roomId;
     private Tetromino currentRunningPiece = null;
     private int currentIndex = 0;
     private float spawnTimer = 0f; // Tracks time since last spawn
     private final float SPAWN_DELAY = 1.0f; // Spawn a new piece every 1 second
 
-    public Board(int row, int col, Side side) {
+    public Board(int row, int col, Side side, TetrominoSpawner spawner, HealthBar healthBar, String roomId) {
         this.ROWS = row;
         this.COLS = col;
         this.grid = new int[ROWS][COLS];
@@ -26,11 +29,21 @@ public class Board {
                 grid[i][j] = -1; // -1 represents an empty cell
             }
         }
-        this.scoreManager = new ScoreManager(side);
+        this.spawner = spawner;
+        this.scoreManager = new ScoreManager(side, healthBar);
+        this.roomId = roomId;
     }
 
     public boolean isFull() {
         return isFull;
+    }
+
+    public void setCurrentRunningPiece(Tetromino piece) {
+        this.currentRunningPiece = piece;
+    }
+
+    public Tetromino getCurrentRunningPiece() {
+        return currentRunningPiece;
     }
 
     public void placePiece(Tetromino piece) {
@@ -137,7 +150,17 @@ public class Board {
     }
 
     public void spawnPiece() {
-        currentRunningPiece = TetrominoSpawner.getInstance().getTetromino(currentIndex);
+        if (spawner != null) {
+            Tetromino piece = spawner.getTetromino(currentIndex);
+            handleSpawn(piece);
+        } else {
+            Main.client.send("request_piece:" + currentIndex);
+        }
+
+    }
+
+    public void handleSpawn(Tetromino piece) {
+        currentRunningPiece = piece;
         currentIndex++;
         Gdx.app.log("SpawnPiece", "Current index: " + (ROWS - currentRunningPiece.getShape().size));
 
@@ -153,6 +176,7 @@ public class Board {
             currentRunningPiece = null;
         }
     }
+    public int getCurrentIndex() {return currentIndex;}
 
     public int getROWS() {
         return ROWS;
@@ -160,6 +184,10 @@ public class Board {
 
     public int getCOLS() {
         return COLS;
+    }
+
+    public void setGrid(int[][] grid) {
+        this.grid = grid;
     }
 
     public int[][] getGrid() {
@@ -199,4 +227,9 @@ public class Board {
             currentRunningPiece.draw(shapeRenderer, posX, posY, ROWS);
         }
     }
+
+
+
+
+
 }

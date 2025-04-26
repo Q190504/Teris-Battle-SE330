@@ -6,22 +6,30 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
+import io.github.room.Room;
+import io.github.ui.HandleMessageScreen;
 
-public class GameScreen implements Screen, InputProcessor, HandleMessageScreen  {
+public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private final int ROWS = 20, COLS = 10, SIZE = 30;
-    private Board board = new Board(ROWS, COLS, Side.LEFT);
-    private Board board2 = new Board(ROWS, COLS, Side.RIGHT);
+    private TetrominoSpawner spawner;
+    private HealthBar healthBar;
+    private Board board;
+    private Board board2;
 
     private ShapeRenderer shapeRenderer;
 
-    public GameScreen() {
+    public GameScreen(Main main, TetrominoSpawner spawner, HealthBar healthBar) {
         shapeRenderer = new ShapeRenderer();
-        HealthBar.getInstance().setWidth(COLS * SIZE * 2 + SIZE);
+        this.spawner = spawner;
+        this.healthBar = healthBar;
+        board = new Board(ROWS, COLS, Side.LEFT, spawner, healthBar, "");
+        board2 = new Board(ROWS, COLS, Side.RIGHT, spawner, healthBar, "");
+        this.healthBar.setWidth(COLS * SIZE * 2 + SIZE);
         Gdx.input.setInputProcessor(this);
     }
 
     private void checkEndGame() {
-        if (board.isFull() || board2.isFull() || HealthBar.getInstance().isEndGame()) {
+        if (board.isFull() || board2.isFull() || healthBar.isEndGame()) {
             // Game Over logic (switch screen or show game over message)
             Gdx.app.log("Event", "End Game");
         }
@@ -42,7 +50,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen  
         // Draw boards and health bar
         board.draw(shapeRenderer, 0, 30);
         board2.draw(shapeRenderer, COLS * SIZE + SIZE, 30);
-        HealthBar.getInstance().draw(shapeRenderer, 0, 0);
+        healthBar.draw(shapeRenderer, 0, 0);
 
         shapeRenderer.end();
     }
