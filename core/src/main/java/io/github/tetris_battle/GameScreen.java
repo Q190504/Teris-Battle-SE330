@@ -44,13 +44,75 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         // Clear the screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Use ShapeRenderer's begin/end in the correct order
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Draw boards and health bar
         board.draw(shapeRenderer, 0, 30);
         board2.draw(shapeRenderer, COLS * SIZE + SIZE, 30);
         healthBar.draw(shapeRenderer, 0, 0);
+        shapeRenderer.end();
+
+//        // Draw grids for both boards
+//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+//        shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 1); // gray grid
+//        // Left board grid
+//        for (int row = 0; row <= ROWS; row++) {
+//            shapeRenderer.line(
+//                0,
+//                30 + row * SIZE,
+//                COLS * SIZE,
+//                30 + row * SIZE
+//            );
+//        }
+//        for (int col = 0; col <= COLS; col++) {
+//            shapeRenderer.line(
+//                col * SIZE,
+//                30,
+//                col * SIZE,
+//                30 + ROWS * SIZE
+//            );
+//        }
+//
+//        // Right board grid
+//        float offsetX = COLS * SIZE;
+//        for (int row = 0; row <= ROWS; row++) {
+//            shapeRenderer.line(
+//                offsetX,
+//                30 + row * SIZE,
+//                offsetX + COLS * SIZE,
+//                30 + row * SIZE
+//            );
+//        }
+//        for (int col = 0; col <= COLS; col++) {
+//            shapeRenderer.line(
+//                offsetX + col * SIZE,
+//                30,
+//                offsetX + col * SIZE,
+//                30 + ROWS * SIZE
+//            );
+//        }
+//
+//        shapeRenderer.end();
+
+
+        // Draw borders
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        // Set border color
+        shapeRenderer.setColor(1, 1, 1, 1); // white border
+
+        // Draw left board border
+        shapeRenderer.rect(
+            0,                       // x
+            30,                         // y
+            COLS * SIZE,                // width
+            ROWS * SIZE                 // height
+        );
+
+        // Draw right board border
+        shapeRenderer.rect(
+            COLS * SIZE,      // x (space between boards = SIZE)
+            30,                         // y
+            COLS * SIZE,          // width
+            ROWS * SIZE                 // height
+        );
 
         shapeRenderer.end();
     }
