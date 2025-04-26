@@ -4,6 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
+import io.github.data.TetrominoDTO;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Tetromino {
     private Array<int[]> shape;
@@ -131,6 +135,17 @@ public class Tetromino {
 
     public void draw(ShapeRenderer shapeRenderer, int posX, int posY, int rows) {
         shapeRenderer.setColor(getColorByType(this.type));
+        StringBuilder shapeLog = new StringBuilder("Drawing piece with shape:\n");
+        for (int i = 0; i < shape.size; i++) {
+            shapeLog.append("[");
+            for (int j = 0; j < shape.get(i).length; j++) {
+                shapeLog.append(shape.get(i)[j]);
+                if (j < shape.get(i).length - 1) shapeLog.append(", ");
+            }
+            shapeLog.append("]\n");
+        }
+        Gdx.app.log("Draw", shapeLog.toString());
+
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {
                 if (shape.get(i)[j] == 1) {
@@ -147,4 +162,33 @@ public class Tetromino {
         }
         return array;
     }
+
+    public TetrominoDTO toDTO() {
+        TetrominoDTO dto = new TetrominoDTO();
+        dto.type = this.type;
+        dto.row = this.row;
+        dto.col = this.col;
+        dto.rotationState = this.rotationState;
+        List<int[]> shapeArray = new ArrayList<>();
+        for (int[] row : this.shape) {
+            shapeArray.add(row);
+        }
+        dto.shape = shapeArray;
+        return dto;
+    }
+
+    public static Tetromino fromDTO(TetrominoDTO dto) {
+        Tetromino tetromino = new Tetromino(dto.type);
+        tetromino.setRow(dto.row);
+        tetromino.setCol(dto.col);
+        tetromino.rotationState = dto.rotationState;
+        Array<int[]> shapeArray = new Array<>();
+        for (int[] row : dto.shape) {
+            shapeArray.add(row);
+        }
+        tetromino.shape = shapeArray;
+        return tetromino;
+    }
+
+
 }
