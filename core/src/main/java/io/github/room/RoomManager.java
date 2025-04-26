@@ -1,6 +1,9 @@
 package io.github.room;
 
+import com.google.gson.Gson;
 import io.github.network.server.PlayerConnection;
+import io.github.tetris_battle.Tetromino;
+import io.github.data.TetrominoDTO;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,9 +46,12 @@ public class RoomManager {
         String[] parts = input.split(":");
         System.out.println("Processing message: " + input);
 
+        String roomId;
+        Room room;
+        String json;
         switch (parts[0]) {
         case "create":
-            Room room = createRoom(player);
+            room = createRoom(player);
             player.send("room_created:" + room.getRoomId());
             break;
         case "auto":
@@ -55,18 +61,19 @@ public class RoomManager {
             if (parts.length < 3) {
                 player.send("lack_of_information");
             }
-            Room targetRoom = rooms.get(parts[1]);
+            room = rooms.get(parts[1]);
             player.name = parts[2];
-            if (targetRoom != null) {
-                targetRoom.requestJoin(player);
+            System.out.println(player);
+            if (room != null) {
+                room.requestJoin(player);
             } else {
                 player.send("room_not_found");
             }
             break;
-        case "approve":
-            Room approveRoom = player.currentRoom;
-            if (approveRoom != null) {
-                approveRoom.approvePlayer(parts[1]);
+        case "accept":
+            room = player.currentRoom;
+            if (room != null) {
+                room.approvePlayer(parts[1]);
             }
             break;
         case "leave":
@@ -74,6 +81,39 @@ public class RoomManager {
                 player.currentRoom.removePlayer(player);
             }
             break;
+        case "game_state":
+            if (parts.length < 3) {
+                player.send("invalid_game_state");
+                break;
+            }
+            room = player.currentRoom;
+            if (room != null) {
+                room.broadcastExcept(player, input);
+            }
+            break;
+        case "request_piece":
+            int index = Integer.parseInt(parts[1]);
+            room = player.currentRoom;
+
+            if (room != null) {
+                Tetromino piece = room.getPiece(index);
+                TetrominoDTO dto = piece.toDTO();
+                json = new Gson().toJson(dto);
+                player.send("next_piece:" + json);
+            }
+            break;
+        case "start":
+            Room startRoom = player.currentRoom;
+            if (startRoom != null && startRoom.getOwner() == player) {
+                startRoom.startGame();
+                System.out.println("Starting game");
+            } else {
+                player.send("not_owner_or_invalid_room");
+            }
+            break;
+
         }
+
+
     }
 }

@@ -3,11 +3,12 @@ package io.github.tetris_battle;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 import io.github.network.client.ClientConnection;
-import io.github.network.server.NetworkManager;
 
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import io.github.ui.*;
 
 public class Main extends Game {
     public static ClientConnection client;
@@ -17,6 +18,9 @@ public class Main extends Game {
 
     @Override
     public void create() {
+        matchScreen = new MatchScreen(this);
+        setScreen(matchScreen);
+
         connectToServer();
 
         // Periodically check connection every 3 seconds
@@ -31,8 +35,7 @@ public class Main extends Game {
             }
         }, 3000, 3000);
 
-        matchScreen = new MatchScreen(this);
-        setScreen(matchScreen);
+
     }
 
     public void connectToServer() {
@@ -48,6 +51,7 @@ public class Main extends Game {
             if (screen instanceof HandleMessageScreen) {
                 ((HandleMessageScreen) screen).HandleMessage("conn");
             }
+            System.out.println("Connected to host.");
 
         } catch (IOException e) {
             client = null;
