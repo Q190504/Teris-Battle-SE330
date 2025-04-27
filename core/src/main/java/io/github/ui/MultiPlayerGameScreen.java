@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
 import com.google.gson.Gson;
@@ -76,10 +77,14 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         board.update(delta);
         sendGameState(delta);
 
+        SpriteBatch batch = new SpriteBatch();
+        batch.begin();
+        board.draw(batch, 0, 30);
+        board2.draw(batch, COLS * SIZE + SIZE, 30);
+        batch.end();
+
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        board.draw(shapeRenderer, 0, 30);
-        board2.draw(shapeRenderer, COLS * SIZE + SIZE, 30);
         healthBar.draw(shapeRenderer, 0, 0);
         shapeRenderer.end();
     }

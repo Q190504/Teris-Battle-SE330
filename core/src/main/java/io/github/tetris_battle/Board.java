@@ -1,6 +1,9 @@
 package io.github.tetris_battle;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
@@ -212,15 +215,24 @@ public class Board {
         }
     }
 
-    public void draw(ShapeRenderer shapeRenderer, int posX, int posY) {
+    public void draw(SpriteBatch batch, int posX, int posY) {
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 if (grid[i][j] != -1) {
-                    shapeRenderer.setColor(Tetromino.getColorByType(grid[i][j]));
-                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
+                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]);
+                    blockSprite.setPosition(j * 30 + posX, i * 30 + posY);
+                    blockSprite.draw(batch);
+
                 } else {
-                    shapeRenderer.setColor(Color.BLACK);
-                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
+//                    shapeRenderer.setColor(Color.BLACK);
+//                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
+//
+                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]); //black
+//                    System.out.println("blockSprite " + blockSprite);
+//
+                    blockSprite.setPosition(j * 30 + posX, i * 30 + posY);
+                    blockSprite.draw(batch);
+
                 }
             }
         }
@@ -229,12 +241,7 @@ public class Board {
             int drawY = currentRunningPiece.getRow() * 30 + posY;
             Gdx.app.log("Draw", "Drawing piece at row: " + currentRunningPiece.getRow() +
                 ", col: " + currentRunningPiece.getCol() + ", y: " + drawY);
-            currentRunningPiece.draw(shapeRenderer, posX, posY, ROWS);
+            currentRunningPiece.draw(batch, posX, posY, ROWS);
         }
     }
-
-
-
-
-
 }

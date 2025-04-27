@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.utils.Array;
@@ -17,15 +19,18 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private Board board2;
 
     private ShapeRenderer shapeRenderer;
+    private SpriteBatch batch;
 
     public GameScreen(Main main, TetrominoSpawner spawner, HealthBar healthBar) {
         shapeRenderer = new ShapeRenderer();
+        batch = new SpriteBatch();
         this.spawner = spawner;
         this.healthBar = healthBar;
         board = new Board(ROWS, COLS, Side.LEFT, spawner, healthBar, "");
         board2 = new Board(ROWS, COLS, Side.RIGHT, spawner, healthBar, "");
         this.healthBar.setWidth(COLS * SIZE * 2 + SIZE);
         Gdx.input.setInputProcessor(this);
+        Tetromino.loadAssets();
     }
 
     private void checkEndGame() {
@@ -44,11 +49,13 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         // Clear the screen
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        board.draw(shapeRenderer, 0, 30);
-        board2.draw(shapeRenderer, COLS * SIZE + SIZE, 30);
-        healthBar.draw(shapeRenderer, 0, 0);
+        batch.begin();
+        board.draw(batch, 0, 30);
+        board2.draw(batch, COLS * SIZE + SIZE, 30);
+        batch.end();
 
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        healthBar.draw(shapeRenderer, 0, 0);
         shapeRenderer.end();
 
         // Draw Next Tetrominos Preview
@@ -67,11 +74,10 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
             shapeRenderer.end();
 
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             // Draw the next tetromino
-            shapeRenderer.setColor(Tetromino.getColorByType(board1NextPiece.getType()));
-            board1NextPiece.draw(shapeRenderer, previewXPos, previewYPos, ROWS);
-            shapeRenderer.end();
+            batch.begin();
+            board1NextPiece.draw(batch, previewXPos, previewYPos, ROWS);
+            batch.end();
 
             if (Gdx.app != null) {
                 Gdx.app.log("GameScreen", "nextPiece (board 1): " + board1NextPiece.getType());
@@ -90,58 +96,16 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             shapeRenderer.rect(previewXPos - (float) previewWidth /4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
             shapeRenderer.end();
 
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             // Draw the next tetromino
-            shapeRenderer.setColor(Tetromino.getColorByType(board2NextPiece.getType()));
-            board2NextPiece.draw(shapeRenderer, previewXPos, previewYPos, ROWS);
-            shapeRenderer.end();
+            batch.begin();
+            board2NextPiece.draw(batch, previewXPos, previewYPos, ROWS);
+            batch.end();
 
             if (Gdx.app != null) {
                 Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
             }
         }
 
-//        // Draw grids for both boards
-//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-//        shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 1); // gray grid
-//        // Left board grid
-//        for (int row = 0; row <= ROWS; row++) {
-//            shapeRenderer.line(
-//                0,
-//                30 + row * SIZE,
-//                COLS * SIZE,
-//                30 + row * SIZE
-//            );
-//        }
-//        for (int col = 0; col <= COLS; col++) {
-//            shapeRenderer.line(
-//                col * SIZE,
-//                30,
-//                col * SIZE,
-//                30 + ROWS * SIZE
-//            );
-//        }
-//
-//        // Right board grid
-//        float offsetX = COLS * SIZE;
-//        for (int row = 0; row <= ROWS; row++) {
-//            shapeRenderer.line(
-//                offsetX,
-//                30 + row * SIZE,
-//                offsetX + COLS * SIZE,
-//                30 + row * SIZE
-//            );
-//        }
-//        for (int col = 0; col <= COLS; col++) {
-//            shapeRenderer.line(
-//                offsetX + col * SIZE,
-//                30,
-//                offsetX + col * SIZE,
-//                30 + ROWS * SIZE
-//            );
-//        }
-//
-//        shapeRenderer.end();
 
         // Draw borders
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -160,7 +124,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         shapeRenderer.rect(
             COLS * SIZE + SIZE,                  // x (space between boards = SIZE)
             30,                              // y
-            COLS * SIZE + SIZE * 1,          // width
+            COLS * SIZE,          // width
             ROWS * SIZE                      // height
         );
 
@@ -227,6 +191,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     @Override
     public void dispose() {
+        batch.dispose();
         shapeRenderer.dispose();
     }
 
