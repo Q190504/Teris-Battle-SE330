@@ -224,15 +224,9 @@ public class Board {
                     blockSprite.draw(batch);
 
                 } else {
-//                    shapeRenderer.setColor(Color.BLACK);
-//                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
-//
-                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]); //black
-//                    System.out.println("blockSprite " + blockSprite);
-//
+                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]); //ghost
                     blockSprite.setPosition(j * 30 + posX, i * 30 + posY);
                     blockSprite.draw(batch);
-
                 }
             }
         }

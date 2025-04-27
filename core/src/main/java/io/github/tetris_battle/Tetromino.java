@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import io.github.data.TetrominoDTO;
 
@@ -26,7 +25,7 @@ public class Tetromino {
     Texture redBlockTexture;
     Texture yellowBlockTexture;
 
-    static Sprite blackBlockSprite;
+    static Sprite ghostBlockSprite;
     static Sprite blueBlockSprite;
     static Sprite cyanBlockSprite;
     static Sprite greenBlockSprite;
@@ -47,7 +46,7 @@ public class Tetromino {
 
     public static void loadAssets() {
         // Load textures
-        Texture blackBlockTexture = new Texture(Gdx.files.internal("sprites/Black.png"));
+        Texture ghostBlockTexture = new Texture(Gdx.files.internal("sprites/Ghost.png"));
         Texture blueBlockTexture = new Texture(Gdx.files.internal("sprites/Blue.png"));
         Texture cyanBlockTexture = new Texture(Gdx.files.internal("sprites/Cyan.png"));
         Texture greenBlockTexture = new Texture(Gdx.files.internal("sprites/Green.png"));
@@ -57,7 +56,7 @@ public class Tetromino {
         Texture yellowBlockTexture = new Texture(Gdx.files.internal("sprites/Yellow.png"));
 
         // Create sprites
-        blackBlockSprite = new Sprite(blackBlockTexture);
+        ghostBlockSprite = new Sprite(ghostBlockTexture);
         blueBlockSprite = new Sprite(blueBlockTexture);
         cyanBlockSprite = new Sprite(cyanBlockTexture);
         greenBlockSprite = new Sprite(greenBlockTexture);
@@ -67,7 +66,7 @@ public class Tetromino {
         yellowBlockSprite = new Sprite(yellowBlockTexture);
 
         // Set size for all
-        blackBlockSprite.setSize(30, 30);
+        ghostBlockSprite.setSize(30, 30);
         blueBlockSprite.setSize(30, 30);
         cyanBlockSprite.setSize(30, 30);
         greenBlockSprite.setSize(30, 30);
@@ -99,7 +98,7 @@ public class Tetromino {
             case 4: return purpleBlockSprite; // T
             case 5: return blueBlockSprite;   // J
             case 6: return orangeBlockSprite; // L
-            default: return blackBlockSprite;
+            default: return ghostBlockSprite;
         }
     }
 

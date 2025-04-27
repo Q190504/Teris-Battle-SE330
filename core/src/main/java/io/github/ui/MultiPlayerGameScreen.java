@@ -23,6 +23,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private Board board2;
 
     private ShapeRenderer shapeRenderer;
+    private SpriteBatch batch;
 
     private float gameStateTimer = 0f;
     private final float GAME_STATE_INTERVAL = 0.1f; // Send game state at most every 0.1s
@@ -31,6 +32,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     public MultiPlayerGameScreen(Main main, HealthBar healthBar, String roomId) {
         shapeRenderer = new ShapeRenderer();
+        batch = new SpriteBatch();
         this.healthBar = healthBar;
         this.roomId = roomId;
         board = new Board(ROWS, COLS, Side.LEFT, null, healthBar, roomId);
@@ -77,13 +79,13 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         board.update(delta);
         sendGameState(delta);
 
-        SpriteBatch batch = new SpriteBatch();
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         batch.begin();
         board.draw(batch, 0, 30);
         board2.draw(batch, COLS * SIZE + SIZE, 30);
         batch.end();
 
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         healthBar.draw(shapeRenderer, 0, 0);
         shapeRenderer.end();
@@ -115,6 +117,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     @Override
     public void dispose() {
+        batch.dispose();
         shapeRenderer.dispose();
     }
 

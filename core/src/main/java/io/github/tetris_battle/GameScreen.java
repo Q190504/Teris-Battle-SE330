@@ -47,11 +47,18 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         board2.update(delta);
 
         // Clear the screen
+        Gdx.gl.glClearColor((float) 120/ 255, (float) 193 / 255, (float) 194 /255, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        shapeRenderer.rect(0, 30, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.rect(COLS * SIZE + SIZE, 30, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.end();
+
         batch.begin();
-        board.draw(batch, 0, 30);
-        board2.draw(batch, COLS * SIZE + SIZE, 30);
+        board.draw(batch,0, 30);
+        board2.draw(batch,COLS * SIZE + SIZE, 30);
         batch.end();
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -63,7 +70,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         Tetromino board2NextPiece = board2.getNextTetromino();
 
         if (board1NextPiece != null) {
-            int previewXPos = COLS * SIZE / 2 - 2 * SIZE;
+            int previewXPos = (int) ((float) (COLS * SIZE) / 2 - 1.5f * SIZE);
             int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
             int previewWidth = SIZE * 6;
             int previewHeight = SIZE * 5;
@@ -71,6 +78,11 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             // Draw border box
             shapeRenderer.setColor(1, 1, 1, 1); // white border
+            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
+            shapeRenderer.end();
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0, 0, 0, 1);
             shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
             shapeRenderer.end();
 
@@ -85,7 +97,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         }
 
         if (board2NextPiece != null) {
-            int previewXPos = COLS * SIZE * 3 / 2 - SIZE;
+            int previewXPos = (int) (COLS * SIZE * 3 / 2 - 0.5f * SIZE);
             int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
             int previewWidth = SIZE * 6;
             int previewHeight = SIZE * 5;
@@ -94,6 +106,11 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             // Draw border box
             shapeRenderer.setColor(1, 1, 1, 1); // white border
             shapeRenderer.rect(previewXPos - (float) previewWidth /4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
+            shapeRenderer.end();
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0, 0, 0, 1);
+            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
             shapeRenderer.end();
 
             // Draw the next tetromino
@@ -122,10 +139,10 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw right board border
         shapeRenderer.rect(
-            COLS * SIZE + SIZE,                  // x (space between boards = SIZE)
-            30,                              // y
-            COLS * SIZE,          // width
-            ROWS * SIZE                      // height
+            COLS * SIZE + SIZE,       // x (space between boards = SIZE)
+            30,                          // y
+            COLS * SIZE,                 // width
+            ROWS * SIZE                  // height
         );
 
         shapeRenderer.end();
