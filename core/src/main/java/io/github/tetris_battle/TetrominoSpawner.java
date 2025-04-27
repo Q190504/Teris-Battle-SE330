@@ -46,18 +46,18 @@ public class TetrominoSpawner {
         return new Tetromino(bagQueue.get(index));
     }
 
-    public Tetromino peekNextTetromino(int currentIndex) {
-        if (bagQueue.isEmpty()) {
+    public Tetromino peekNextTetromino(int index) {
+        if (index >= bagQueue.size) {
             shuffleBag();
             if (Gdx.app != null) {
-                Gdx.app.log("TetrominoSpawner", "Shuffled new bag because queue was empty (peek).");
+                Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
             }
         }
 
-        if (bagQueue.size > 1) {
-            return new Tetromino(bagQueue.get(currentIndex + 1)); // Peek at the NEXT piece
+        if (!bagQueue.isEmpty()) {
+            return new Tetromino(bagQueue.get(index)); // Peek at the NEXT piece
         } else {
-            // If there's only one piece, shuffle and peek at the first
+            // If there's no piece left, shuffle and peek at the first
             shuffleBag();
             return new Tetromino(bagQueue.get(0));
         }

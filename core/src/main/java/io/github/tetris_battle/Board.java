@@ -156,7 +156,7 @@ public class Board {
     public void spawnPiece() {
         if (spawner != null) {
             Tetromino piece = spawner.getTetromino(currentIndex);
-            nextRunningPiece = spawner.peekNextTetromino(currentIndex);
+            nextRunningPiece = spawner.peekNextTetromino(currentIndex + 1);
             handleSpawn(piece);
         } else {
             Main.client.send("request_piece:" + currentIndex);

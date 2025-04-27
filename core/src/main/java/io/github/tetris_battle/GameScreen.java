@@ -53,7 +53,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw Next Tetrominos Preview
         Tetromino board1NextPiece = board.getNextTetromino();
-        Tetromino board2NextPiece = board.getNextTetromino();
+        Tetromino board2NextPiece = board2.getNextTetromino();
 
         if (board1NextPiece != null) {
             int previewXPos = COLS * SIZE / 2 - 2 * SIZE;
