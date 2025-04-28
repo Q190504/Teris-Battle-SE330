@@ -2,18 +2,11 @@ package io.github.tetris_battle;
 
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import io.github.data.TetrominoDTO;
 
 public class TetrominoSpawner {
     private Array<Integer> bagQueue = new Array<>();
     private Array<Integer> boardBucket;
-    private static TetrominoSpawner instance;
-
-    public static TetrominoSpawner getInstance() {
-        if (instance == null) {
-            instance = new TetrominoSpawner();
-        }
-        return instance;
-    }
 
     public void setBoardBucket(Array<Integer> boardBucket) {
         this.boardBucket = boardBucket;
@@ -31,19 +24,45 @@ public class TetrominoSpawner {
     public Tetromino getTetromino(int index) {
         if (index >= bagQueue.size) {
             shuffleBag();
-            Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
+            if (Gdx.app != null) {
+                Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
+            }
         }
 
         int minIndex = getMinIndexFromBoardBucket();
 
-        if (minIndex >= 0 && minIndex < bagQueue.size) {
+        if (minIndex >= 0 && minIndex < bagQueue.size)
+        {
             bagQueue.removeRange(0, minIndex);
-            Gdx.app.log("TetrominoSpawner", "Removed elements from bagQueue up to index " + minIndex);
+            if (Gdx.app != null)
+            {
+                Gdx.app.log("TetrominoSpawner", "Removed elements from bagQueue up to index " + minIndex);
+            }
         }
-
-        Gdx.app.log("TetrominoSpawner", "Spawned new piece at index " + index);
+        if (Gdx.app != null)
+        {
+            Gdx.app.log("TetrominoSpawner", "Spawned new piece at index " + index);
+        }
         return new Tetromino(bagQueue.get(index));
     }
+
+    public Tetromino peekNextTetromino(int index) {
+        if (index >= bagQueue.size) {
+            shuffleBag();
+            if (Gdx.app != null) {
+                Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
+            }
+        }
+
+        if (!bagQueue.isEmpty()) {
+            return new Tetromino(bagQueue.get(index)); // Peek at the NEXT piece
+        } else {
+            // If there's no piece left, shuffle and peek at the first
+            shuffleBag();
+            return new Tetromino(bagQueue.get(0));
+        }
+    }
+
 
     // Helper function to get the minimum index from boardBucket
     private int getMinIndexFromBoardBucket() {

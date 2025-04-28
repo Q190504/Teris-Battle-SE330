@@ -1,15 +1,38 @@
 package io.github.tetris_battle;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import io.github.data.TetrominoDTO;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Tetromino {
     private Array<int[]> shape;
     private Array<int[]> initialShape;
     private int row, col, type;
     private int rotationState;
+
+    Texture blackBlockTexture;
+    Texture blueBlockTexture;
+    Texture cyanBlockTexture;
+    Texture greenBlockTexture;
+    Texture orangeBlockTexture;
+    Texture purpleBlockTexture;
+    Texture redBlockTexture;
+    Texture yellowBlockTexture;
+
+    static Sprite ghostBlockSprite;
+    static Sprite blueBlockSprite;
+    static Sprite cyanBlockSprite;
+    static Sprite greenBlockSprite;
+    static Sprite orangeBlockSprite;
+    static Sprite purpleBlockSprite;
+    static Sprite redBlockSprite;
+    static Sprite yellowBlockSprite;
 
     public static final int[][][] SHAPES = {
         {{1, 1, 1, 1}}, // I
@@ -21,16 +44,61 @@ public class Tetromino {
         {{1, 1, 1}, {0, 0, 1}}  // J
     };
 
-    public static Color getColorByType(int type) {
+    public static void loadAssets() {
+        // Load textures
+        Texture ghostBlockTexture = new Texture(Gdx.files.internal("sprites/Ghost.png"));
+        Texture blueBlockTexture = new Texture(Gdx.files.internal("sprites/Blue.png"));
+        Texture cyanBlockTexture = new Texture(Gdx.files.internal("sprites/Cyan.png"));
+        Texture greenBlockTexture = new Texture(Gdx.files.internal("sprites/Green.png"));
+        Texture orangeBlockTexture = new Texture(Gdx.files.internal("sprites/Orange.png"));
+        Texture purpleBlockTexture = new Texture(Gdx.files.internal("sprites/Purple.png"));
+        Texture redBlockTexture = new Texture(Gdx.files.internal("sprites/Red.png"));
+        Texture yellowBlockTexture = new Texture(Gdx.files.internal("sprites/Yellow.png"));
+
+        // Create sprites
+        ghostBlockSprite = new Sprite(ghostBlockTexture);
+        blueBlockSprite = new Sprite(blueBlockTexture);
+        cyanBlockSprite = new Sprite(cyanBlockTexture);
+        greenBlockSprite = new Sprite(greenBlockTexture);
+        orangeBlockSprite = new Sprite(orangeBlockTexture);
+        purpleBlockSprite = new Sprite(purpleBlockTexture);
+        redBlockSprite = new Sprite(redBlockTexture);
+        yellowBlockSprite = new Sprite(yellowBlockTexture);
+
+        // Set size for all
+        ghostBlockSprite.setSize(30, 30);
+        blueBlockSprite.setSize(30, 30);
+        cyanBlockSprite.setSize(30, 30);
+        greenBlockSprite.setSize(30, 30);
+        orangeBlockSprite.setSize(30, 30);
+        purpleBlockSprite.setSize(30, 30);
+        redBlockSprite.setSize(30, 30);
+        yellowBlockSprite.setSize(30, 30);
+    }
+
+//    public static Color getColorByType(int type) {
+//        switch (type) {
+//            case 0: return Color.CYAN;   // I
+//            case 1: return Color.YELLOW; // O
+//            case 2: return Color.GREEN;  // S
+//            case 3: return Color.RED;    // Z
+//            case 4: return Color.MAGENTA; // T (Purple isn't available in AWT)
+//            case 5: return Color.BLUE;   // J
+//            case 6: return Color.ORANGE; // L
+//            default: return Color.WHITE;
+//        }
+//    }
+
+    public static Sprite getColorByType(int type) {
         switch (type) {
-            case 0: return Color.CYAN;   // I
-            case 1: return Color.YELLOW; // O
-            case 2: return Color.GREEN;  // S
-            case 3: return Color.RED;    // Z
-            case 4: return Color.MAGENTA; // T (Purple isn't available in AWT)
-            case 5: return Color.BLUE;   // J
-            case 6: return Color.ORANGE; // L
-            default: return Color.WHITE;
+            case 0: return cyanBlockSprite;   // I
+            case 1: return yellowBlockSprite; // O
+            case 2: return greenBlockSprite;  // S
+            case 3: return redBlockSprite;    // Z
+            case 4: return purpleBlockSprite; // T
+            case 5: return blueBlockSprite;   // J
+            case 6: return orangeBlockSprite; // L
+            default: return ghostBlockSprite;
         }
     }
 
@@ -129,16 +197,29 @@ public class Tetromino {
         shape = rotated;
     }
 
-    public void draw(ShapeRenderer shapeRenderer, int posX, int posY, int rows) {
-        shapeRenderer.setColor(getColorByType(this.type));
+    public void draw(SpriteBatch batch, int posX, int posY, int rows) {
+        StringBuilder shapeLog = new StringBuilder("Drawing piece with shape:\n");
+        for (int i = 0; i < shape.size; i++) {
+            shapeLog.append("[");
+            for (int j = 0; j < shape.get(i).length; j++) {
+                shapeLog.append(shape.get(i)[j]);
+                if (j < shape.get(i).length - 1) shapeLog.append(", ");
+            }
+            shapeLog.append("]\n");
+        }
+        Gdx.app.log("Draw", shapeLog.toString());
+
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {
                 if (shape.get(i)[j] == 1) {
-                    shapeRenderer.rect((col + j) * 30 + posX, (row + i) * 30 + posY, 30, 30);
+                    Sprite blockSprite = getColorByType(this.type);
+                    blockSprite.setPosition((col + j) * 30 + posX, (row + i) * 30 + posY);
+                    blockSprite.draw(batch);
                 }
             }
         }
     }
+
 
     private Array<int[]> convertToArray(int[][] shapeArray) {
         Array<int[]> array = new Array<>();
@@ -147,4 +228,33 @@ public class Tetromino {
         }
         return array;
     }
+
+    public TetrominoDTO toDTO() {
+        TetrominoDTO dto = new TetrominoDTO();
+        dto.type = this.type;
+        dto.row = this.row;
+        dto.col = this.col;
+        dto.rotationState = this.rotationState;
+        List<int[]> shapeArray = new ArrayList<>();
+        for (int[] row : this.shape) {
+            shapeArray.add(row);
+        }
+        dto.shape = shapeArray;
+        return dto;
+    }
+
+    public static Tetromino fromDTO(TetrominoDTO dto) {
+        Tetromino tetromino = new Tetromino(dto.type);
+        tetromino.setRow(dto.row);
+        tetromino.setCol(dto.col);
+        tetromino.rotationState = dto.rotationState;
+        Array<int[]> shapeArray = new Array<>();
+        for (int[] row : dto.shape) {
+            shapeArray.add(row);
+        }
+        tetromino.shape = shapeArray;
+        return tetromino;
+    }
+
+
 }

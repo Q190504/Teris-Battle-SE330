@@ -1,9 +1,13 @@
 package io.github.tetris_battle;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import io.github.data.TetrominoDTO;
 
 public class Board {
     private final int ROWS;
@@ -11,12 +15,16 @@ public class Board {
     private int[][] grid;
     private boolean isFull = false;
     private ScoreManager scoreManager;
+    private TetrominoSpawner spawner;
+    private String roomId;
     private Tetromino currentRunningPiece = null;
     private int currentIndex = 0;
+    private Tetromino nextRunningPiece = null;
+    private int nextIndex = 0;
     private float spawnTimer = 0f; // Tracks time since last spawn
     private final float SPAWN_DELAY = 1.0f; // Spawn a new piece every 1 second
 
-    public Board(int row, int col, Side side) {
+    public Board(int row, int col, Side side, TetrominoSpawner spawner, HealthBar healthBar, String roomId) {
         this.ROWS = row;
         this.COLS = col;
         this.grid = new int[ROWS][COLS];
@@ -26,12 +34,24 @@ public class Board {
                 grid[i][j] = -1; // -1 represents an empty cell
             }
         }
-        this.scoreManager = new ScoreManager(side);
+        this.spawner = spawner;
+        this.scoreManager = new ScoreManager(side, healthBar);
+        this.roomId = roomId;
     }
 
     public boolean isFull() {
         return isFull;
     }
+
+    public void setCurrentRunningPiece(Tetromino piece) {
+        this.currentRunningPiece = piece;
+    }
+
+    public Tetromino getCurrentRunningPiece() {
+        return currentRunningPiece;
+    }
+
+    public Tetromino getNextTetromino() { return nextRunningPiece; }
 
     public void placePiece(Tetromino piece) {
         Array<int[]> shape = piece.getShape();
@@ -137,7 +157,18 @@ public class Board {
     }
 
     public void spawnPiece() {
-        currentRunningPiece = TetrominoSpawner.getInstance().getTetromino(currentIndex);
+        if (spawner != null) {
+            Tetromino piece = spawner.getTetromino(currentIndex);
+            nextRunningPiece = spawner.peekNextTetromino(currentIndex + 1);
+            handleSpawn(piece);
+        } else {
+            Main.client.send("request_piece:" + currentIndex);
+        }
+
+    }
+
+    public void handleSpawn(Tetromino piece) {
+        currentRunningPiece = piece;
         currentIndex++;
         Gdx.app.log("SpawnPiece", "Current index: " + (ROWS - currentRunningPiece.getShape().size));
 
@@ -153,6 +184,7 @@ public class Board {
             currentRunningPiece = null;
         }
     }
+    public int getCurrentIndex() {return currentIndex;}
 
     public int getROWS() {
         return ROWS;
@@ -160,6 +192,10 @@ public class Board {
 
     public int getCOLS() {
         return COLS;
+    }
+
+    public void setGrid(int[][] grid) {
+        this.grid = grid;
     }
 
     public int[][] getGrid() {
@@ -179,15 +215,18 @@ public class Board {
         }
     }
 
-    public void draw(ShapeRenderer shapeRenderer, int posX, int posY) {
+    public void draw(SpriteBatch batch, int posX, int posY) {
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 if (grid[i][j] != -1) {
-                    shapeRenderer.setColor(Tetromino.getColorByType(grid[i][j]));
-                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
+                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]);
+                    blockSprite.setPosition(j * 30 + posX, i * 30 + posY);
+                    blockSprite.draw(batch);
+
                 } else {
-                    shapeRenderer.setColor(Color.BLACK);
-                    shapeRenderer.rect(j * 30 + posX, i * 30 + posY, 30, 30);
+                    Sprite blockSprite = Tetromino.getColorByType(grid[i][j]); //ghost
+                    blockSprite.setPosition(j * 30 + posX, i * 30 + posY);
+                    blockSprite.draw(batch);
                 }
             }
         }
@@ -196,7 +235,7 @@ public class Board {
             int drawY = currentRunningPiece.getRow() * 30 + posY;
             Gdx.app.log("Draw", "Drawing piece at row: " + currentRunningPiece.getRow() +
                 ", col: " + currentRunningPiece.getCol() + ", y: " + drawY);
-            currentRunningPiece.draw(shapeRenderer, posX, posY, ROWS);
+            currentRunningPiece.draw(batch, posX, posY, ROWS);
         }
     }
 }
