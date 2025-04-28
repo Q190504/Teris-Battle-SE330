@@ -4,10 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Array;
 import io.github.ui.HandleMessageScreen;
 
@@ -21,6 +27,14 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
 
+    private Skin skin;
+    private Stage stage;
+
+    private Label leftNextPieceLabel;
+    private Label rightNextPieceLabel;
+
+    private TextButton leaveRoomBtn;
+
     public GameScreen(Main main, TetrominoSpawner spawner, HealthBar healthBar) {
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
@@ -31,6 +45,16 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         this.healthBar.setWidth(COLS * SIZE * 2 + SIZE);
         Gdx.input.setInputProcessor(this);
         Tetromino.loadAssets();
+
+        stage = new Stage();
+        skin = new Skin(Gdx.files.internal("assets\\uiskin.json"));
+
+        // Create Labels
+        leftNextPieceLabel = new Label("NEXT PIECE", skin);
+        rightNextPieceLabel = new Label("NEXT PIECE", skin);
+
+        //Create button
+        leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
     }
 
     private void checkEndGame() {
@@ -50,79 +74,21 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         Gdx.gl.glClearColor((float) 120/ 255, (float) 193 / 255, (float) 194 /255, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        stage.act(Gdx.graphics.getDeltaTime());
+        stage.draw();
+
+        //Draw background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 1);
-        shapeRenderer.rect(0, 30, SIZE * COLS, SIZE * ROWS);
-        shapeRenderer.rect(COLS * SIZE + SIZE, 30, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.rect(SIZE, SIZE, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.rect(COLS * SIZE + 2 * SIZE, SIZE, SIZE * COLS, SIZE * ROWS);
         shapeRenderer.end();
 
+        //Draw boards
         batch.begin();
-        board.draw(batch,0, 30);
-        board2.draw(batch,COLS * SIZE + SIZE, 30);
+        board.draw(batch, SIZE, SIZE);
+        board2.draw(batch,COLS * SIZE + 2 * SIZE, SIZE);
         batch.end();
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        healthBar.draw(shapeRenderer, 0, 0);
-        shapeRenderer.end();
-
-        // Draw Next Tetrominos Preview
-        Tetromino board1NextPiece = board.getNextTetromino();
-        Tetromino board2NextPiece = board2.getNextTetromino();
-
-        if (board1NextPiece != null) {
-            int previewXPos = (int) ((float) (COLS * SIZE) / 2 - 1.5f * SIZE);
-            int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
-            int previewWidth = SIZE * 6;
-            int previewHeight = SIZE * 5;
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            // Draw border box
-            shapeRenderer.setColor(1, 1, 1, 1); // white border
-            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
-            shapeRenderer.end();
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(0, 0, 0, 1);
-            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
-            shapeRenderer.end();
-
-            // Draw the next tetromino
-            batch.begin();
-            board1NextPiece.draw(batch, previewXPos, previewYPos, ROWS);
-            batch.end();
-
-            if (Gdx.app != null) {
-                Gdx.app.log("GameScreen", "nextPiece (board 1): " + board1NextPiece.getType());
-            }
-        }
-
-        if (board2NextPiece != null) {
-            int previewXPos = (int) (COLS * SIZE * 3 / 2 - 0.5f * SIZE);
-            int previewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
-            int previewWidth = SIZE * 6;
-            int previewHeight = SIZE * 5;
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            // Draw border box
-            shapeRenderer.setColor(1, 1, 1, 1); // white border
-            shapeRenderer.rect(previewXPos - (float) previewWidth /4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
-            shapeRenderer.end();
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(0, 0, 0, 1);
-            shapeRenderer.rect(previewXPos - (float) previewWidth / 4, previewYPos - (float) previewHeight / 4, previewWidth, previewHeight);
-            shapeRenderer.end();
-
-            // Draw the next tetromino
-            batch.begin();
-            board2NextPiece.draw(batch, previewXPos, previewYPos, ROWS);
-            batch.end();
-
-            if (Gdx.app != null) {
-                Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
-            }
-        }
-
 
         // Draw borders
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -131,21 +97,101 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw left board border
         shapeRenderer.rect(
-            0,                       // x
-            30,                         // y
+            SIZE,                       // x
+            SIZE,                       // y
             COLS * SIZE,                // width
             ROWS * SIZE                 // height
         );
 
         // Draw right board border
         shapeRenderer.rect(
-            COLS * SIZE + SIZE,       // x (space between boards = SIZE)
-            30,                          // y
+            COLS * SIZE + 2 * SIZE,   // x (space between boards = SIZE)
+            SIZE,                        // y
             COLS * SIZE,                 // width
             ROWS * SIZE                  // height
         );
 
         shapeRenderer.end();
+
+
+        // Draw Left Preview Tetromino
+        Tetromino board1NextPiece = board.getNextTetromino();
+        Tetromino board2NextPiece = board2.getNextTetromino();
+
+        int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 1.5f * SIZE);
+        int leftPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
+        int leftPreviewWidth = SIZE * 6;
+        int leftPreviewHeight = SIZE * 5;
+
+        //Left Next Piece label
+        leftNextPieceLabel.setPosition(leftPreviewXPos, leftPreviewYPos + leftPreviewHeight - SIZE);
+        stage.addActor(leftNextPieceLabel);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        // Draw right preview's border
+        shapeRenderer.setColor(1, 1, 1, 1); // white border
+        shapeRenderer.rect(leftPreviewXPos - (float) leftPreviewWidth / 4, leftPreviewYPos - (float) leftPreviewHeight / 4, leftPreviewWidth + 0.5f, leftPreviewHeight + 0.5f);
+        shapeRenderer.end();
+
+        //Draw left preview's background
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        shapeRenderer.rect(leftPreviewXPos - (float) leftPreviewWidth / 4, leftPreviewYPos - (float) leftPreviewHeight / 4, leftPreviewWidth, leftPreviewHeight);
+        shapeRenderer.end();
+
+        if (board1NextPiece != null) {
+            // Draw the next tetromino
+            batch.begin();
+            board1NextPiece.draw(batch, leftPreviewXPos, leftPreviewYPos, ROWS);
+            batch.end();
+
+            if (Gdx.app != null) {
+                Gdx.app.log("GameScreen", "nextPiece (board 1): " + board1NextPiece.getType());
+            }
+        }
+
+        // Draw Right Preview Tetromino
+        int rightPreviewXPos = (int) ((float) (COLS * SIZE * 3) / 2 + 1.5f * SIZE);
+        int rightPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
+        int rightPreviewWidth = SIZE * 6;
+        int rightPreviewHeight = SIZE * 5;
+
+        // Right next piece label
+        rightNextPieceLabel.setPosition(rightPreviewXPos, leftPreviewYPos + leftPreviewHeight - SIZE);
+        stage.addActor(rightNextPieceLabel);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        // Draw right preview's  border
+        shapeRenderer.setColor(1, 1, 1, 1); // white border
+        shapeRenderer.rect(rightPreviewXPos - (float) rightPreviewWidth /4, rightPreviewYPos - (float) rightPreviewHeight / 4, rightPreviewWidth + 0.5f, rightPreviewHeight + 0.5f);
+        shapeRenderer.end();
+
+        //Draw right preview's background
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        shapeRenderer.rect(rightPreviewXPos - (float) rightPreviewWidth / 4, rightPreviewYPos - (float) rightPreviewHeight / 4, rightPreviewWidth, rightPreviewHeight);
+        shapeRenderer.end();
+
+        if (board2NextPiece != null) {
+            // Draw the next tetromino
+            batch.begin();
+            board2NextPiece.draw(batch, rightPreviewXPos, rightPreviewYPos, ROWS);
+            batch.end();
+
+            if (Gdx.app != null) {
+                Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
+            }
+        }
+
+        //Draw health bar
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        int maxHeight = Math.max(leftPreviewYPos + leftPreviewHeight + SIZE,
+            rightPreviewYPos + rightPreviewHeight + SIZE);
+        healthBar.draw(shapeRenderer, SIZE, maxHeight);
+        shapeRenderer.end();
+        //Draw leave room button
+        leaveRoomBtn.setPosition( healthBar.getWidth() + 2.5f * SIZE, maxHeight);
+        stage.addActor(leaveRoomBtn);
     }
 
     @Override
