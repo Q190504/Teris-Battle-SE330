@@ -24,6 +24,9 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private Board board;
     private Board board2;
 
+    private final int startPos = SIZE * 3;
+    private final int spaceBetween2Boards = SIZE * 2;
+
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
 
@@ -42,7 +45,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         this.healthBar = healthBar;
         board = new Board(ROWS, COLS, Side.LEFT, spawner, healthBar, "");
         board2 = new Board(ROWS, COLS, Side.RIGHT, spawner, healthBar, "");
-        this.healthBar.setWidth(COLS * SIZE * 2 + SIZE);
+        this.healthBar.setWidth(COLS * SIZE * 2 + spaceBetween2Boards);
         Gdx.input.setInputProcessor(this);
         Tetromino.loadAssets();
 
@@ -80,14 +83,14 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         //Draw background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 1);
-        shapeRenderer.rect(SIZE, SIZE, SIZE * COLS, SIZE * ROWS);
-        shapeRenderer.rect(COLS * SIZE + 2 * SIZE, SIZE, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.rect(startPos, SIZE, SIZE * COLS, SIZE * ROWS);
+        shapeRenderer.rect(startPos + COLS * SIZE + spaceBetween2Boards, SIZE, SIZE * COLS, SIZE * ROWS);
         shapeRenderer.end();
 
         //Draw boards
         batch.begin();
-        board.draw(batch, SIZE, SIZE);
-        board2.draw(batch,COLS * SIZE + 2 * SIZE, SIZE);
+        board.draw(batch, startPos, SIZE);
+        board2.draw(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
         batch.end();
 
         // Draw borders
@@ -97,7 +100,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw left board border
         shapeRenderer.rect(
-            SIZE,                       // x
+            startPos,                       // x
             SIZE,                       // y
             COLS * SIZE,                // width
             ROWS * SIZE                 // height
@@ -105,7 +108,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         // Draw right board border
         shapeRenderer.rect(
-            COLS * SIZE + 2 * SIZE,   // x (space between boards = SIZE)
+            startPos + COLS * SIZE + spaceBetween2Boards,   // x (space between boards = SIZE)
             SIZE,                        // y
             COLS * SIZE,                 // width
             ROWS * SIZE                  // height
@@ -118,7 +121,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         Tetromino board1NextPiece = board.getNextTetromino();
         Tetromino board2NextPiece = board2.getNextTetromino();
 
-        int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 1.5f * SIZE);
+        int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 0.5f * SIZE);
         int leftPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
         int leftPreviewWidth = SIZE * 6;
         int leftPreviewHeight = SIZE * 5;
@@ -151,7 +154,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         }
 
         // Draw Right Preview Tetromino
-        int rightPreviewXPos = (int) ((float) (COLS * SIZE * 3) / 2 + 1.5f * SIZE);
+        int rightPreviewXPos = (int) ((float) (COLS * SIZE * 3) / 2 + 5.5f * SIZE);
         int rightPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
         int rightPreviewWidth = SIZE * 6;
         int rightPreviewHeight = SIZE * 5;
@@ -187,10 +190,11 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         int maxHeight = Math.max(leftPreviewYPos + leftPreviewHeight + SIZE,
             rightPreviewYPos + rightPreviewHeight + SIZE);
-        healthBar.draw(shapeRenderer, SIZE, maxHeight);
+        healthBar.draw(shapeRenderer, startPos, maxHeight);
         shapeRenderer.end();
+
         //Draw leave room button
-        leaveRoomBtn.setPosition( healthBar.getWidth() + 2.5f * SIZE, maxHeight);
+        leaveRoomBtn.setPosition( startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
         stage.addActor(leaveRoomBtn);
     }
 
