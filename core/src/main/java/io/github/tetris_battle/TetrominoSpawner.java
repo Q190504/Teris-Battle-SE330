@@ -25,7 +25,7 @@ public class TetrominoSpawner {
         if (index >= bagQueue.size) {
             shuffleBag();
             if (Gdx.app != null) {
-                Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
+                //Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
             }
         }
 
@@ -36,12 +36,12 @@ public class TetrominoSpawner {
             bagQueue.removeRange(0, minIndex);
             if (Gdx.app != null)
             {
-                Gdx.app.log("TetrominoSpawner", "Removed elements from bagQueue up to index " + minIndex);
+                //Gdx.app.log("TetrominoSpawner", "Removed elements from bagQueue up to index " + minIndex);
             }
         }
         if (Gdx.app != null)
         {
-            Gdx.app.log("TetrominoSpawner", "Spawned new piece at index " + index);
+            //Gdx.app.log("TetrominoSpawner", "Spawned new piece at index " + index);
         }
         return new Tetromino(bagQueue.get(index));
     }
@@ -50,7 +50,7 @@ public class TetrominoSpawner {
         if (index >= bagQueue.size) {
             shuffleBag();
             if (Gdx.app != null) {
-                Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
+                //Gdx.app.log("TetrominoSpawner", "Shuffling new bag index...");
             }
         }
 

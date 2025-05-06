@@ -207,7 +207,7 @@ public class Tetromino {
             }
             shapeLog.append("]\n");
         }
-        Gdx.app.log("Draw", shapeLog.toString());
+        //Gdx.app.log("Draw", shapeLog.toString());
 
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {

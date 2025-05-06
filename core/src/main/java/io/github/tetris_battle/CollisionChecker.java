@@ -27,12 +27,12 @@ public class CollisionChecker {
 
                     // Kiểm tra vượt ra ngoài bảng
                     if (blockRow < 0 || blockRow >= ROWS || blockCol < 0 || blockCol >= COLS) {
-                        Gdx.app.log("CollisionChecker", "Out of bounds at row: " + blockRow + ", col: " + blockCol);
+                        //Gdx.app.log("CollisionChecker", "Out of bounds at row: " + blockRow + ", col: " + blockCol);
                         return true;
                     }
                     // Kiểm tra chồng lấp với khối khác
                     if (grid[blockRow][blockCol] != -1) {
-                        Gdx.app.log("CollisionChecker", "Collision with block at row: " + blockRow + ", col: " + blockCol);
+                        //Gdx.app.log("CollisionChecker", "Collision with block at row: " + blockRow + ", col: " + blockCol);
                         return true;
                     }
                 }
