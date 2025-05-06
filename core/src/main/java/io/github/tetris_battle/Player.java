@@ -1,5 +1,7 @@
 package io.github.tetris_battle;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +54,35 @@ public class Player {
     }
 
     public ScoreManager getScoreManager() {
-        return scoreManager;
+        return board.getScoreManager();
+    }
+
+    public void movePiece(int dir) {
+        board.movePiece(dir);
+    }
+
+    public void dropPiece() {
+        board.dropPiece();
+    }
+
+    public void rotatePiece() {
+        board.rotatePiece();
+    }
+
+    public boolean isFullBoard() {
+        return board.isFull();
+    }
+
+    public void update(float delta) {
+        board.update(delta);
+    }
+
+    public void drawBoard(SpriteBatch batch, int posX, int posY) {
+        board.draw(batch, posX, posY);
+    }
+
+    public Tetromino getNextTetromino() {
+        return board.getNextTetromino();
     }
 }
 

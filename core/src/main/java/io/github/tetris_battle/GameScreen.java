@@ -76,14 +76,14 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             public void clicked(InputEvent event, float x, float y) {
                 if (extraPointBtn.isDisabled())
                     return;
-                activeExtraPointSkill = new ExtraPointsSkill(player1.getBoard().getScoreManager(), 90);
+                activeExtraPointSkill = new ExtraPointsSkill(player1.getScoreManager(), 90);
                 player1.useSkill(activeExtraPointSkill);
             }
         });
     }
 
     private void checkEndGame() {
-        if (player1.getBoard().isFull() || player2.getBoard().isFull() || healthBar.isEndGame()) {
+        if (player1.isFullBoard() || player2.isFullBoard() || healthBar.isEndGame()) {
             // Game Over logic (switch screen or show game over message)
             //Gdx.app.log("Event", "End Game");
         }
@@ -92,8 +92,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     @Override
     public void render(float delta) {
         checkEndGame();
-        player1.getBoard().update(delta);
-        player2.getBoard().update(delta);
+        player1.update(delta);
+        player2.update(delta);
 
         // Clear the screen
         Gdx.gl.glClearColor((float) 120/ 255, (float) 193 / 255, (float) 194 /255, 1);
@@ -111,8 +111,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         //Draw boards
         batch.begin();
-        player1.getBoard().draw(batch, startPos, SIZE);
-        player2.getBoard().draw(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
+        player1.drawBoard(batch, startPos, SIZE);
+        player2.drawBoard(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
         batch.end();
 
         // Draw borders
@@ -140,8 +140,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
 
         // Draw Left Preview Tetromino
-        Tetromino board1NextPiece = player1.getBoard().getNextTetromino();
-        Tetromino board2NextPiece = player2.getBoard().getNextTetromino();
+        Tetromino board1NextPiece = player1.getNextTetromino();
+        Tetromino board2NextPiece = player2.getNextTetromino();
 
         int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 0.5f * SIZE);
         int leftPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
@@ -242,17 +242,17 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.LEFT) player1.getBoard().movePiece(-1);
-        else if (keycode == Input.Keys.RIGHT) player1.getBoard().movePiece(1);
-        else if (keycode == Input.Keys.DOWN) player1.getBoard().dropPiece();
-        else if (keycode == Input.Keys.UP) player1.getBoard().rotatePiece();
+        if (keycode == Input.Keys.LEFT) player1.movePiece(-1);
+        else if (keycode == Input.Keys.RIGHT) player1.movePiece(1);
+        else if (keycode == Input.Keys.DOWN) player1.dropPiece();
+        else if (keycode == Input.Keys.UP) player1.rotatePiece();
 
-        if (keycode == Input.Keys.A) player2.getBoard().movePiece(-1);
-        else if (keycode == Input.Keys.D) player2.getBoard().movePiece(1);
-        else if (keycode == Input.Keys.S) player2.getBoard().dropPiece();
+        if (keycode == Input.Keys.A) player2.movePiece(-1);
+        else if (keycode == Input.Keys.D) player2.movePiece(1);
+        else if (keycode == Input.Keys.S) player2.dropPiece();
         else if (keycode == Input.Keys.W) {
             Gdx.app.log("Event", "rotatePiece");
-            player2.getBoard().rotatePiece();
+            player2.rotatePiece();
         }
         return true; // Return true to indicate event was handled
     }
