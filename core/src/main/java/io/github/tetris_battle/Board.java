@@ -39,6 +39,10 @@ public class Board {
         this.roomId = roomId;
     }
 
+    public ScoreManager getScoreManager() {
+        return scoreManager;
+    }
+
     public boolean isFull() {
         return isFull;
     }
@@ -68,7 +72,7 @@ public class Board {
                             grid[targetRow][targetCol] = piece.getType();
                         }
                     } else {
-                        Gdx.app.log("PlacePiece", "Out of bounds at row: " + targetRow + ", col: " + targetCol);
+                        // Gdx.app.log("PlacePiece", "Out of bounds at row: " + targetRow + ", col: " + targetCol);
                     }
 
 //                    if (targetRow < 0 || targetRow >= ROWS || targetCol < 0 || targetCol >= COLS) {
@@ -233,8 +237,8 @@ public class Board {
 
         if (currentRunningPiece != null) {
             int drawY = currentRunningPiece.getRow() * 30 + posY;
-            Gdx.app.log("Draw", "Drawing piece at row: " + currentRunningPiece.getRow() +
-                ", col: " + currentRunningPiece.getCol() + ", y: " + drawY);
+            //Gdx.app.log("Draw", "Drawing piece at row: " + currentRunningPiece.getRow() +
+               // ", col: " + currentRunningPiece.getCol() + ", y: " + drawY);
             currentRunningPiece.draw(batch, posX, posY, ROWS);
         }
     }

@@ -1,5 +1,7 @@
 package io.github.tetris_battle;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,32 +11,28 @@ public class Player {
     private int score;
     private Board board;
     private ScoreManager scoreManager;
+    private TetrominoSpawner spawner;
+    private HealthBar healthBar;
     // private List<Skill> activatedSkills;
 
-    public Player(String name, TetrominoSpawner spawner, Board board) {
-        this.skillPoints = 0;
-        this.name = name;
-        this.score = 0;
-        this.board = board;
+    public Player(TetrominoSpawner spawner, HealthBar healthBar, String roomId, Side side) {
+        this.spawner = spawner;
+        this.healthBar = healthBar;
+        this.board = new Board(20, 10, side, spawner, healthBar, roomId);
     }
 
     public void updated() {
     //  board.update();
     }
 
-    public void addSkillPoints(int points) {
-        this.skillPoints += points;
+    public boolean useSkill(Skill skill) {
+        if (!skill.isActive()) {
+            skill.activate();
+            return true;
+        }
+        return false;
     }
 
-//    public boolean useSkill(Skill skill) {
-//        if (skillPoints >= skill.getCooldown() && !skill.isActive()) {
-//            skill.activate();
-//            activatedSkills.add(skill);
-//            skillPoints -= skill.getCooldown();
-//            return true;
-//        }
-//        return false;
-//    }
     public Board getBoard() {
         return board;
     }
@@ -56,11 +54,35 @@ public class Player {
     }
 
     public ScoreManager getScoreManager() {
-        return scoreManager;
+        return board.getScoreManager();
     }
 
-//    public List<Skill> getActivatedSkills() {
-//        return new ArrayList<>(activatedSkills);
-//    }
+    public void movePiece(int dir) {
+        board.movePiece(dir);
+    }
+
+    public void dropPiece() {
+        board.dropPiece();
+    }
+
+    public void rotatePiece() {
+        board.rotatePiece();
+    }
+
+    public boolean isFullBoard() {
+        return board.isFull();
+    }
+
+    public void update(float delta) {
+        board.update(delta);
+    }
+
+    public void drawBoard(SpriteBatch batch, int posX, int posY) {
+        board.draw(batch, posX, posY);
+    }
+
+    public Tetromino getNextTetromino() {
+        return board.getNextTetromino();
+    }
 }
 

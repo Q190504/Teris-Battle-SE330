@@ -1,19 +1,16 @@
 package io.github.tetris_battle;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.PixmapPacker;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
 import io.github.ui.HandleMessageScreen;
 
@@ -21,8 +18,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private final int ROWS = 20, COLS = 10, SIZE = 30;
     private TetrominoSpawner spawner;
     private HealthBar healthBar;
-    private Board board;
-    private Board board2;
+    private Player player1;
+    private Player player2;
 
     private final int startPos = SIZE * 3;
     private final int spaceBetween2Boards = SIZE * 2;
@@ -38,19 +35,32 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     private TextButton leaveRoomBtn;
 
+    private TextButton extraPointBtn;
+    private TextButton lockOpponentBtn;
+    private TextButton speedBoostBtn;
+
+    private ExtraPointsSkill activeExtraPointSkill;
+
+    private Label countdownLabel;
+
     public GameScreen(Main main, TetrominoSpawner spawner, HealthBar healthBar) {
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
         this.spawner = spawner;
         this.healthBar = healthBar;
-        board = new Board(ROWS, COLS, Side.LEFT, spawner, healthBar, "");
-        board2 = new Board(ROWS, COLS, Side.RIGHT, spawner, healthBar, "");
+        player1 = new Player(spawner, healthBar, "", Side.LEFT);
+        player2 = new Player(spawner, healthBar, "", Side.RIGHT);
         this.healthBar.setWidth(COLS * SIZE * 2 + spaceBetween2Boards);
-        Gdx.input.setInputProcessor(this);
+
         Tetromino.loadAssets();
 
         stage = new Stage();
         skin = new Skin(Gdx.files.internal("assets\\uiskin.json"));
+
+        InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(stage);
+        multiplexer.addProcessor(this);
+        Gdx.input.setInputProcessor(multiplexer);
 
         // Create Labels
         leftNextPieceLabel = new Label("NEXT PIECE", skin);
@@ -58,20 +68,32 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         //Create button
         leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
+
+        extraPointBtn = new TextButton("X2", skin);
+
+        extraPointBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (extraPointBtn.isDisabled())
+                    return;
+                activeExtraPointSkill = new ExtraPointsSkill(player1.getScoreManager(), 90);
+                player1.useSkill(activeExtraPointSkill);
+            }
+        });
     }
 
     private void checkEndGame() {
-        if (board.isFull() || board2.isFull() || healthBar.isEndGame()) {
+        if (player1.isFullBoard() || player2.isFullBoard() || healthBar.isEndGame()) {
             // Game Over logic (switch screen or show game over message)
-            Gdx.app.log("Event", "End Game");
+            //Gdx.app.log("Event", "End Game");
         }
     }
 
     @Override
     public void render(float delta) {
         checkEndGame();
-        board.update(delta);
-        board2.update(delta);
+        player1.update(delta);
+        player2.update(delta);
 
         // Clear the screen
         Gdx.gl.glClearColor((float) 120/ 255, (float) 193 / 255, (float) 194 /255, 1);
@@ -89,8 +111,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         //Draw boards
         batch.begin();
-        board.draw(batch, startPos, SIZE);
-        board2.draw(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
+        player1.drawBoard(batch, startPos, SIZE);
+        player2.drawBoard(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
         batch.end();
 
         // Draw borders
@@ -118,8 +140,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
 
         // Draw Left Preview Tetromino
-        Tetromino board1NextPiece = board.getNextTetromino();
-        Tetromino board2NextPiece = board2.getNextTetromino();
+        Tetromino board1NextPiece = player1.getNextTetromino();
+        Tetromino board2NextPiece = player2.getNextTetromino();
 
         int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 0.5f * SIZE);
         int leftPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
@@ -147,10 +169,6 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             batch.begin();
             board1NextPiece.draw(batch, leftPreviewXPos, leftPreviewYPos, ROWS);
             batch.end();
-
-            if (Gdx.app != null) {
-                Gdx.app.log("GameScreen", "nextPiece (board 1): " + board1NextPiece.getType());
-            }
         }
 
         // Draw Right Preview Tetromino
@@ -182,7 +200,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             batch.end();
 
             if (Gdx.app != null) {
-                Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
+                //Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
             }
         }
 
@@ -196,21 +214,45 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         //Draw leave room button
         leaveRoomBtn.setPosition( startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
         stage.addActor(leaveRoomBtn);
+
+        // Skill Btn
+        extraPointBtn.setPosition(
+            leftPreviewXPos + leftPreviewWidth + SIZE,
+            leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() / 2
+        );
+        stage.addActor(extraPointBtn);
+
+        // Skill duration
+        if (activeExtraPointSkill != null) {
+            activeExtraPointSkill.update(delta);
+            if (activeExtraPointSkill.isActive()) {
+                extraPointBtn.setDisabled(true);
+                int secondsLeft = (int) Math.ceil(activeExtraPointSkill.getCurrentCooldown());
+                extraPointBtn.setText("X2 (" + secondsLeft + ")");
+            } else if (!activeExtraPointSkill.canActivate()) {
+                extraPointBtn.setDisabled(true);
+                int secondsLeft = (int) Math.ceil(activeExtraPointSkill.getCurrentCooldown());
+                extraPointBtn.setText("X (" + secondsLeft + ")");
+            } else {
+                extraPointBtn.setDisabled(false);
+                extraPointBtn.setText("X2");
+            }
+        }
     }
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.LEFT) board.movePiece(-1);
-        else if (keycode == Input.Keys.RIGHT) board.movePiece(1);
-        else if (keycode == Input.Keys.DOWN) board.dropPiece();
-        else if (keycode == Input.Keys.UP) board.rotatePiece();
+        if (keycode == Input.Keys.LEFT) player1.movePiece(-1);
+        else if (keycode == Input.Keys.RIGHT) player1.movePiece(1);
+        else if (keycode == Input.Keys.DOWN) player1.dropPiece();
+        else if (keycode == Input.Keys.UP) player1.rotatePiece();
 
-        if (keycode == Input.Keys.A) board2.movePiece(-1);
-        else if (keycode == Input.Keys.D) board2.movePiece(1);
-        else if (keycode == Input.Keys.S) board2.dropPiece();
+        if (keycode == Input.Keys.A) player2.movePiece(-1);
+        else if (keycode == Input.Keys.D) player2.movePiece(1);
+        else if (keycode == Input.Keys.S) player2.dropPiece();
         else if (keycode == Input.Keys.W) {
             Gdx.app.log("Event", "rotatePiece");
-            board2.rotatePiece();
+            player2.rotatePiece();
         }
         return true; // Return true to indicate event was handled
     }
@@ -260,6 +302,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     public void dispose() {
         batch.dispose();
         shapeRenderer.dispose();
+        stage.dispose();
+        skin.dispose();
     }
 
     @Override
