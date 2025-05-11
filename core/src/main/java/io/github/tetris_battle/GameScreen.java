@@ -285,20 +285,16 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     @Override
     public boolean keyDown(int keycode) {
-        if(!player1.isBeingLocked())
-        {
-            if (keycode == Input.Keys.A) player1.movePiece(-1);
-            else if (keycode == Input.Keys.D) player1.movePiece(1);
-            else if (keycode == Input.Keys.S) player1.dropPiece();
-            else if (keycode == Input.Keys.W) player1.rotatePiece();
-        }
-        if (!player2.isBeingLocked())
-        {
-            if (keycode == Input.Keys.LEFT) player2.movePiece(-1);
-            else if (keycode == Input.Keys.RIGHT) player2.movePiece(1);
-            else if (keycode == Input.Keys.DOWN) player2.dropPiece();
-            else if (keycode == Input.Keys.UP) player2.rotatePiece();
-        }
+        if (keycode == Input.Keys.A  && player1.isBeingLocked()) player1.movePiece(-1);
+        else if (keycode == Input.Keys.D && player1.isBeingLocked()) player1.movePiece(1);
+        else if (keycode == Input.Keys.S) player1.dropPiece();
+        else if (keycode == Input.Keys.W) player1.rotatePiece();
+
+        if (keycode == Input.Keys.LEFT && !player2.isBeingLocked()) player2.movePiece(-1);
+        else if (keycode == Input.Keys.RIGHT && !player2.isBeingLocked()) player2.movePiece(1);
+        else if (keycode == Input.Keys.DOWN) player2.dropPiece();
+        else if (keycode == Input.Keys.UP) player2.rotatePiece();
+        
         return true; // Return true to indicate event was handled
     }
 
