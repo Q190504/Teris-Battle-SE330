@@ -2,16 +2,12 @@ package io.github.tetris_battle;
 
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PixmapPacker;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.Array;
 import io.github.ui.HandleMessageScreen;
 
 public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
@@ -40,6 +36,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private TextButton speedBoostBtn;
 
     private ExtraPointsSkill activeExtraPointSkill;
+    private LockOpponentSkill activeLockOpponentSkill;
 
     private Label countdownLabel;
 
@@ -68,8 +65,8 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
         //Create button
         leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
-
         extraPointBtn = new TextButton("X2", skin);
+        lockOpponentBtn = new TextButton("Lock Opponent", skin);
 
         extraPointBtn.addListener(new ClickListener() {
             @Override
@@ -78,6 +75,16 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
                     return;
                 activeExtraPointSkill = new ExtraPointsSkill(player1.getScoreManager(), 90);
                 player1.useSkill(activeExtraPointSkill);
+            }
+        });
+
+        lockOpponentBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (lockOpponentBtn.isDisabled())
+                    return;
+                activeLockOpponentSkill = new LockOpponentSkill(player2, 10f);
+                player1.useSkill(activeLockOpponentSkill);
             }
         });
     }
@@ -215,9 +222,13 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         leaveRoomBtn.setPosition( startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
         stage.addActor(leaveRoomBtn);
 
-        // Skill Btn
+        // Skill Btns
+
+        // extraPointBtn
+        extraPointBtn.setSize(60, 30);
+
         extraPointBtn.setPosition(
-            leftPreviewXPos + leftPreviewWidth + SIZE,
+            leftPreviewXPos + leftPreviewWidth - SIZE,
             leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() / 2
         );
         stage.addActor(extraPointBtn);
@@ -238,21 +249,55 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
                 extraPointBtn.setText("X2");
             }
         }
+
+
+        // Lock opponent Skill Button
+
+        lockOpponentBtn.setSize(190, 30);
+
+        lockOpponentBtn.setPosition(
+            leftPreviewXPos + leftPreviewWidth - SIZE,
+            leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() - lockOpponentBtn.getHeight()
+        );
+        stage.addActor(lockOpponentBtn);
+
+        // Skill duration
+        if (activeLockOpponentSkill != null) {
+            activeLockOpponentSkill.update(delta);
+            if (activeLockOpponentSkill.isActive()) // Skill is activating
+            {
+                lockOpponentBtn.setDisabled(true);
+                lockOpponentBtn.setText("Lock Opponent is active");
+            }
+            else if (!activeLockOpponentSkill.canActivate()) // Skill can't be activated
+            {
+                lockOpponentBtn.setDisabled(true);
+                int secondsLeft = (int) Math.ceil(activeLockOpponentSkill.getCurrentCooldown());
+                lockOpponentBtn.setText("Lock Opponent (" + secondsLeft + ")");
+            }
+            else // Skill can be activated
+            {
+                lockOpponentBtn.setDisabled(false);
+                lockOpponentBtn.setText("Lock Opponent");
+            }
+        }
     }
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.LEFT) player1.movePiece(-1);
-        else if (keycode == Input.Keys.RIGHT) player1.movePiece(1);
-        else if (keycode == Input.Keys.DOWN) player1.dropPiece();
-        else if (keycode == Input.Keys.UP) player1.rotatePiece();
-
-        if (keycode == Input.Keys.A) player2.movePiece(-1);
-        else if (keycode == Input.Keys.D) player2.movePiece(1);
-        else if (keycode == Input.Keys.S) player2.dropPiece();
-        else if (keycode == Input.Keys.W) {
-            Gdx.app.log("Event", "rotatePiece");
-            player2.rotatePiece();
+        if(!player1.isBeingLocked())
+        {
+            if (keycode == Input.Keys.A) player1.movePiece(-1);
+            else if (keycode == Input.Keys.D) player1.movePiece(1);
+            else if (keycode == Input.Keys.S) player1.dropPiece();
+            else if (keycode == Input.Keys.W) player1.rotatePiece();
+        }
+        if (!player2.isBeingLocked())
+        {
+            if (keycode == Input.Keys.LEFT) player2.movePiece(-1);
+            else if (keycode == Input.Keys.RIGHT) player2.movePiece(1);
+            else if (keycode == Input.Keys.DOWN) player2.dropPiece();
+            else if (keycode == Input.Keys.UP) player2.rotatePiece();
         }
         return true; // Return true to indicate event was handled
     }

@@ -2,9 +2,6 @@ package io.github.tetris_battle;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Player {
     private int skillPoints;
     private String name;
@@ -14,6 +11,8 @@ public class Player {
     private TetrominoSpawner spawner;
     private HealthBar healthBar;
     // private List<Skill> activatedSkills;
+
+    private boolean isBeingLocked = false;
 
     public Player(TetrominoSpawner spawner, HealthBar healthBar, String roomId, Side side) {
         this.spawner = spawner;
@@ -84,5 +83,12 @@ public class Player {
     public Tetromino getNextTetromino() {
         return board.getNextTetromino();
     }
+
+    public void setIsBeingLocked(boolean isBeingLocked)
+    {
+        this.isBeingLocked = isBeingLocked;
+    }
+
+    public boolean isBeingLocked() { return isBeingLocked; }
 }
 

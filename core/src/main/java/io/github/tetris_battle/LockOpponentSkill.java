@@ -1,13 +1,13 @@
 package io.github.tetris_battle;
 
-public class ExtraPointsSkill extends Skill {
+public class LockOpponentSkill extends Skill {
     private float timer = 0f;
-    private final ScoreManager scoreManager;
+    private final Player player;
 
-    public ExtraPointsSkill(ScoreManager scoreManager, float cooldownTime) {
+    public LockOpponentSkill(Player player, float cooldownTime) {
         super(cooldownTime);
-        this.scoreManager = scoreManager;
-        setEffectingTime(10f); // 10 seconds
+        this.player = player;
+        setEffectingTime(5f); //5 seconds
     }
 
     @Override
@@ -15,7 +15,7 @@ public class ExtraPointsSkill extends Skill {
         if (canActivate()) {
             active = true;
             timer = getEffectingTime();
-            scoreManager.setDoubleDamage(true);
+            player.setIsBeingLocked(true);
         }
     }
 
@@ -26,7 +26,7 @@ public class ExtraPointsSkill extends Skill {
             timer -= delta;
             if (timer <= 0) {
                 active = false;
-                scoreManager.setDoubleDamage(false);
+                player.setIsBeingLocked(false);
                 startCooldown();
             }
         }
