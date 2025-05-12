@@ -19,7 +19,9 @@ public class Player {
         this.healthBar = healthBar;
         this.board = new Board(20, 10, side, spawner, healthBar, roomId);
     }
-
+    public Player(Board board) {
+        this.board = board;
+    }
     public void updated() {
     //  board.update();
     }

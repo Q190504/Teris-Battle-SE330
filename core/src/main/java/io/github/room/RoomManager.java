@@ -99,7 +99,13 @@ public class RoomManager {
                 Tetromino piece = room.getPiece(index);
                 TetrominoDTO dto = piece.toDTO();
                 json = new Gson().toJson(dto);
+                player.send("piece:" + json);
+
+                piece = room.getNextPiece(index);
+                dto = piece.toDTO();
+                json = new Gson().toJson(dto);
                 player.send("next_piece:" + json);
+
             }
             break;
         case "start":

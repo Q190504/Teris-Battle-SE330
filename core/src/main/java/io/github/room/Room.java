@@ -37,6 +37,9 @@ public class Room {
     public Tetromino getPiece(int index) {
         return tetrominoSpawner.getTetromino(index);
     }
+    public Tetromino getNextPiece(int index) {
+        return tetrominoSpawner.peekNextTetromino(index + 1);
+    }
     public void broadcast(String message) {
         for (PlayerConnection p : approved.values()) {
             p.send(message);

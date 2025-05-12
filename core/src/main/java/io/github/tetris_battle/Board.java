@@ -51,6 +51,10 @@ public class Board {
         this.currentRunningPiece = piece;
     }
 
+    public void setNextRunningPiece(Tetromino piece) {
+        this.nextRunningPiece = piece;
+    }
+
     public Tetromino getCurrentRunningPiece() {
         return currentRunningPiece;
     }
