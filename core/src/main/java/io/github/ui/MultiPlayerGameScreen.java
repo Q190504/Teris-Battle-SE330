@@ -113,8 +113,10 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private void sendGameState(float delta) {
         gameStateTimer += delta;
 
-        // Only send if interval has passed and previous message acknowledged
-        if (gameStateTimer >= GAME_STATE_INTERVAL && lastSentAck <= lastReceivedAck) {
+        float currentHealth = healthBar.getPivot();
+        boolean healthChanged = currentHealth != lastSentHealth;
+
+        if (gameStateTimer >= GAME_STATE_INTERVAL || healthChanged) {
             gameStateTimer = 0;
 
             Board board = player.getBoard();
@@ -123,7 +125,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             state.player = new PlayerState();
             state.player.grid = board.getGrid();
             state.player.pieceIndex = board.getCurrentIndex();
-            state.player.health = healthBar.getPivot();
+            state.player.health = currentHealth;
 
             Tetromino currentPiece = board.getCurrentRunningPiece();
             state.player.currentPiece = (currentPiece != null) ? currentPiece.toDTO() : null;
@@ -146,6 +148,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private void checkEndGame() {
         if (player.isFullBoard() || healthBar.isEndGame()) {
             Gdx.app.log("Event", "End Game");
+            // Optionally: main.setScreen(new GameOverScreen());
         }
     }
 
@@ -387,6 +390,10 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             String json = msg.substring("next_piece:".length());
             Tetromino piece = Tetromino.fromDTO(new Gson().fromJson(json, TetrominoDTO.class));
             player.getBoard().setNextRunningPiece(piece);
+        } else if (msg.startsWith("lock_player")) {
+            player.setIsBeingLocked(true);
+        } else if (msg.startsWith("unlock_player")) {
+            player.setIsBeingLocked(false);
         }
     }
 
