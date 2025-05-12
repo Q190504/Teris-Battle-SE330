@@ -81,16 +81,7 @@ public class RoomManager {
                 player.currentRoom.removePlayer(player);
             }
             break;
-        case "game_state":
-            if (parts.length < 3) {
-                player.send("invalid_game_state");
-                break;
-            }
-            room = player.currentRoom;
-            if (room != null) {
-                room.broadcastExcept(player, input);
-            }
-            break;
+
         case "request_piece":
             int index = Integer.parseInt(parts[1]);
             room = player.currentRoom;
@@ -99,7 +90,13 @@ public class RoomManager {
                 Tetromino piece = room.getPiece(index);
                 TetrominoDTO dto = piece.toDTO();
                 json = new Gson().toJson(dto);
+                player.send("piece:" + json);
+
+                piece = room.getNextPiece(index);
+                dto = piece.toDTO();
+                json = new Gson().toJson(dto);
                 player.send("next_piece:" + json);
+
             }
             break;
         case "start":
@@ -111,7 +108,12 @@ public class RoomManager {
                 player.send("not_owner_or_invalid_room");
             }
             break;
-
+        default:
+            room = player.currentRoom;
+            if (room != null) {
+                room.broadcastExcept(player, input);
+            }
+            break;
         }
 
 

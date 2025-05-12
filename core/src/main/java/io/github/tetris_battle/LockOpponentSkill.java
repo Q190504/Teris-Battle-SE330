@@ -10,12 +10,22 @@ public class LockOpponentSkill extends Skill {
         setEffectingTime(5f); //5 seconds
     }
 
+    public LockOpponentSkill(float cooldownTime) {
+        super(cooldownTime);
+        this.player = null;
+        setEffectingTime(5f); //5 seconds
+    }
+
     @Override
     public void activate() {
         if (canActivate()) {
             active = true;
             timer = getEffectingTime();
-            player.setIsBeingLocked(true);
+            if (player!= null) {
+                player.setIsBeingLocked(true);
+            } else {
+                Main.client.send("lock_player");
+            }
         }
     }
 
@@ -26,7 +36,11 @@ public class LockOpponentSkill extends Skill {
             timer -= delta;
             if (timer <= 0) {
                 active = false;
-                player.setIsBeingLocked(false);
+                if (player!= null) {
+                    player.setIsBeingLocked(false);
+                } else {
+                    Main.client.send("unlock_player");
+                }
                 startCooldown();
             }
         }
