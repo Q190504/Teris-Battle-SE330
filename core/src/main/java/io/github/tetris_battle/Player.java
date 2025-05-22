@@ -92,5 +92,10 @@ public class Player {
     }
 
     public boolean isBeingLocked() { return isBeingLocked; }
+
+    public void dropCurrentPieceToBottom() {
+        board.dropPieceToBottom();
+    }
+    
 }
 
