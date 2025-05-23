@@ -19,12 +19,12 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
 
     private final Main main;
     private final boolean isOwner;
-    private boolean isReady = false;
+    private boolean isGuestReady = false;
 
     private final String roomId;
 
     private Stage stage;
-    private Label player1Label, player2Label, statusLabel;
+    private Label player1Label, player2Label, statusLabel, ready1Label, ready2Label;
     private TextButton startButton, readyButton, leaveButton;
     private TextButton skillBtn1, skillBtn2, skillBtn3;
 
@@ -45,125 +45,155 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
     @Override
     public void show() {
         Gdx.app.postRunnable(() -> {
-        stage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(stage);
+            stage = new Stage(new ScreenViewport());
+            Gdx.input.setInputProcessor(stage);
 
-        Table root = new Table();
-        root.setFillParent(true);
-        root.center().pad(30);
-        root.defaults().pad(10);
+            Table root = new Table();
+            root.setFillParent(true);
+            root.center().pad(30);
+            root.defaults().pad(10);
 
-        // Player names
-        player1Label = UIFactory.createLabel("Player 1: " + player1Name);
-        player1Label.setColor(AppColors.TITLE);
-        player1Label.setFontScale(1.2f);
+            // Player names
+            player1Label = UIFactory.createLabel("Player 1: " + player1Name);
+            player1Label.setColor(AppColors.TITLE);
+            player1Label.setFontScale(1.2f);
 
-        player2Label = UIFactory.createLabel("Player 2: " + player2Name);
-        player2Label.setColor(AppColors.TITLE);
-        player2Label.setFontScale(1.2f);
+            player2Label = UIFactory.createLabel("Player 2: " + player2Name);
+            player2Label.setColor(AppColors.TITLE);
+            player2Label.setFontScale(1.2f);
 
-        // Status label
-        statusLabel = UIFactory.createLabel("");
-        statusLabel.setColor(AppColors.TEXT_FIELD);
-        statusLabel.setWrap(true);
+            ready1Label = UIFactory.createLabel("Not Ready");
+            ready1Label.setColor(AppColors.BUTTON_TEXT);
 
-        // Skill buttons
-        skillBtn1 = createSkillButton(LockOpponentSkill.getStaticName());
-        skillBtn2 = createSkillButton(ExtraPointsSkill.getStaticName());
-        skillBtn3 = createSkillButton(SpeedBoostSkill.getStaticName());
+            ready2Label = UIFactory.createLabel("Not Ready");
+            ready2Label.setColor(AppColors.BUTTON_TEXT);
 
-        // Buttons container for skills
-        Table skillsTable = new Table();
-        skillsTable.defaults().pad(10);
-        skillsTable.add(skillBtn1).width(200).height(40);
-        skillsTable.add(skillBtn2).width(200).height(40);
-        skillsTable.add(skillBtn3).width(200).height(40);
+            // Status label
+            statusLabel = UIFactory.createLabel("");
+            statusLabel.setColor(AppColors.TEXT_FIELD);
+            statusLabel.setWrap(true);
 
-        // Start button (owner only)
-        startButton = UIFactory.createTextButton("Start Game", new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                if (isReady) {
-                    if (selectedSkills.size() < 2)
-                    {
-                        statusLabel.setText("Not enough skills, get more skill.");
-                        return;
+            // Skill buttons
+            skillBtn1 = createSkillButton(LockOpponentSkill.getStaticName());
+            skillBtn2 = createSkillButton(ExtraPointsSkill.getStaticName());
+            skillBtn3 = createSkillButton(SpeedBoostSkill.getStaticName());
+
+            Label instruction1 = UIFactory.createLabel(LockOpponentSkill.getStaticInstruction());
+            Label instruction2 = UIFactory.createLabel(ExtraPointsSkill.getStaticInstruction());
+            Label instruction3 = UIFactory.createLabel(SpeedBoostSkill.getStaticInstruction());
+            instruction1.setWrap(true);
+            instruction2.setWrap(true);
+            instruction3.setWrap(true);
+
+            // Buttons container for skills
+            Table skill1Table = new Table();
+            skill1Table.add(skillBtn1).width(230).height(40).row();
+            skill1Table.add(instruction1).width(230).center().padTop(5);
+
+            Table skill2Table = new Table();
+            skill2Table.add(skillBtn2).width(230).height(40).row();
+            skill2Table.add(instruction2).width(230).center().padTop(5);
+
+            Table skill3Table = new Table();
+            skill3Table.add(skillBtn3).width(230).height(40).row();
+            skill3Table.add(instruction3).width(230).center().padTop(5);
+
+            // Add to main skills table
+            Table skillsTable = new Table();
+            skillsTable.defaults().pad(10);
+            skillsTable.add(skill1Table);
+            skillsTable.add(skill2Table);
+            skillsTable.add(skill3Table);
+
+            // Start button (owner only)
+            startButton = UIFactory.createTextButton("Start Game", new ClickListener() {
+                @Override
+                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    if (isGuestReady) {
+                        if (selectedSkills.size() < 2) {
+                            statusLabel.setText("Not enough skills, get more skill.");
+                            return;
+                        }
+                        Main.client.send(Messages.START);
+                        statusLabel.setText("Game starting...");
+                    } else {
+                        statusLabel.setText("Wait for your opponent to ready.");
                     }
-                    Main.client.send(Messages.START);
-                    statusLabel.setText("Game starting...");
-                } else {
-                    statusLabel.setText("Wait for your opponent to ready.");
                 }
-            }
-        });
-        startButton.setColor(AppColors.BUTTON_BG);
-        startButton.getLabel().setColor(AppColors.BUTTON_TEXT);
-        startButton.getLabel().setFontScale(1f);
-        startButton.setSize(200, 45);
-        startButton.setDisabled(true);
+            });
+            startButton.setColor(AppColors.BUTTON_BG);
+            startButton.getLabel().setColor(AppColors.BUTTON_TEXT);
+            startButton.getLabel().setFontScale(1f);
+            startButton.setSize(200, 45);
+            startButton.setDisabled(true);
 
-        // Ready button (joiner only)
-        readyButton = UIFactory.createTextButton("Ready", new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                isReady = !isReady;
-                if (isReady) {
-                    if (selectedSkills.size() < 2)
-                    {
-                        statusLabel.setText("Not enough skills, get more skill.");
-                        isReady = false;
-                        return;
+            // Ready button (guest only)
+            readyButton = UIFactory.createTextButton("Ready", new ClickListener() {
+                @Override
+                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    isGuestReady = !isGuestReady;
+                    if (isGuestReady) {
+                        if (selectedSkills.size() < 2) {
+                            statusLabel.setText("Not enough skills, get more skill.");
+                            isGuestReady = false;
+                            return;
+                        }
+                        Main.client.send(Messages.READY);
+                        readyButton.setText("Unready");
+                        statusLabel.setText("Ready! Waiting for other player...");
+                        ready2Label.setText("Ready");
+                    } else {
+                        Main.client.send(Messages.UNREADY);
+                        readyButton.setText("Ready");
+                        statusLabel.setText("");
+                        ready2Label.setText("Not Ready");
                     }
-                    Main.client.send(Messages.READY);
-                    readyButton.setText("Unready");
-                    statusLabel.setText("Ready! Waiting for other player...");
-                } else {
-                    Main.client.send(Messages.UNREADY);
-                    readyButton.setText("Ready");
-                    statusLabel.setText("");
                 }
+            });
+
+            readyButton.setColor(AppColors.BUTTON_BG);
+            readyButton.getLabel().setColor(AppColors.BUTTON_TEXT);
+            readyButton.getLabel().setFontScale(1f);
+            readyButton.setSize(200, 45);
+            readyButton.setDisabled(true);
+
+            // Leave button (both)
+            leaveButton = UIFactory.createTextButton("Leave Room", new ClickListener() {
+                @Override
+                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    Main.client.send(Messages.LEAVE);
+                    main.setScreen(new MatchScreen(main));
+                }
+            });
+            leaveButton.setColor(AppColors.BUTTON_BG);
+            leaveButton.getLabel().setColor(AppColors.BUTTON_TEXT);
+            leaveButton.getLabel().setFontScale(1f);
+            leaveButton.setSize(200, 45);
+
+            // Compose layout
+            root.add(player1Label).colspan(2).right();
+            root.add(ready1Label).left();
+            root.row();
+            root.add(player2Label).colspan(2).right();
+            root.add(ready2Label).left();
+            root.row();
+
+            root.add(new Label("Select 2 Skills:", UIFactory.getSkin())).colspan(3).center().padTop(20).row();
+            root.add(skillsTable).colspan(3).center().row();
+
+            // Buttons: start/ready + leave
+            if (isOwner) {
+                root.add(startButton).width(200).height(45).padTop(30).padRight(20);
+                root.add(leaveButton).width(200).height(45).padTop(30).colspan(2).left();
+            } else {
+                root.add(readyButton).width(200).height(45).padTop(30).padRight(20);
+                root.add(leaveButton).width(200).height(45).padTop(30).colspan(2).left();
             }
-        });
 
-        readyButton.setColor(AppColors.BUTTON_BG);
-        readyButton.getLabel().setColor(AppColors.BUTTON_TEXT);
-        readyButton.getLabel().setFontScale(1f);
-        readyButton.setSize(200, 45);
-        readyButton.setDisabled(true);
+            root.row();
+            root.add(statusLabel).colspan(3).width(400).padTop(30);
 
-        // Leave button (both)
-        leaveButton = UIFactory.createTextButton("Leave Room", new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                Main.client.send(Messages.LEAVE);
-                main.setScreen(new MatchScreen(main));
-            }
-        });
-        leaveButton.setColor(AppColors.BUTTON_BG);
-        leaveButton.getLabel().setColor(AppColors.BUTTON_TEXT);
-        leaveButton.getLabel().setFontScale(1f);
-        leaveButton.setSize(200, 45);
-
-        // Compose layout
-        root.add(player1Label).colspan(3).center().row();
-        root.add(player2Label).colspan(3).center().row();
-
-        root.add(new Label("Select 2 Skills:", UIFactory.getSkin())).colspan(3).center().padTop(20).row();
-        root.add(skillsTable).colspan(3).center().row();
-
-        // Buttons: start/ready + leave
-        if (isOwner) {
-            root.add(startButton).width(200).height(45).padTop(30).padRight(20);
-            root.add(leaveButton).width(200).height(45).padTop(30).colspan(2).left();
-        } else {
-            root.add(readyButton).width(200).height(45).padTop(30).padRight(20);
-            root.add(leaveButton).width(200).height(45).padTop(30).colspan(2).left();
-        }
-
-        root.row();
-        root.add(statusLabel).colspan(3).width(400).padTop(30);
-
-        stage.addActor(root);
+            stage.addActor(root);
         });
     }
 
@@ -174,27 +204,31 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
                 TextButton btn = btnHolder[0];
-                if (isReady) {
+                if (isGuestReady && !isOwner) {
                     statusLabel.setText("You've locked your skills, unready for choosing skills.");
                     return;
                 }
 
                 if (selectedSkills.contains(skillName)) {
                     selectedSkills.remove(skillName);
-                    btn.setColor(AppColors.BUTTON_BG);
+                    if (isOwner) {
+                        ready1Label.setText("Not Ready");
+                        Main.client.send(Messages.UNREADY);
+                    }
+                    btn.setColor(AppColors.BUTTON_BG_CYAN);
                 } else {
                     if (selectedSkills.size() >= MAX_SKILLS) {
                         statusLabel.setText("You can only select 2 skills.");
                         return;
                     }
                     selectedSkills.add(skillName);
-                    btn.setColor(AppColors.BUTTON_TEXT);
+                    btn.setColor(AppColors.BUTTON_BG_MAGENTA);
                 }
                 updateActionButtons();
             }
         });
 
-        btn.setColor(AppColors.BUTTON_BG);
+        btn.setColor(AppColors.BUTTON_BG_CYAN);
         btn.getLabel().setColor(AppColors.BUTTON_TEXT);
         btn.getLabel().setFontScale(1f);
 
@@ -207,11 +241,16 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
         boolean enabled = selectedSkills.size() == MAX_SKILLS;
         if (isOwner) {
             startButton.setDisabled(!enabled);
+
         } else {
             readyButton.setDisabled(!enabled);
         }
         if (enabled) {
-            statusLabel.setText("You have selected 2 skills. You can " + (isOwner ? "start" : "ready") + " now.");
+            if (isOwner) {
+                ready1Label.setText("Ready");
+                Main.client.send(Messages.READY);
+            }
+            statusLabel.setText("You have selected 2 skills. " + (isOwner ? "Wait for other to ready." : "You can ready now."));
         } else {
             statusLabel.setText("Select exactly 2 skills to proceed.");
         }
@@ -236,9 +275,20 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
         System.out.println(msg);
         String[] parts = msg.split(Messages.SEPARATOR);
         if (parts[0].equals(Messages.READY)) {
-            this.isReady = true;
+            if (isOwner) {
+                this.isGuestReady = true;
+                ready2Label.setText("Ready");
+            }
+            else
+                ready1Label.setText("Ready");
+            statusLabel.setText("");
         } else if (parts[0].equals(Messages.UNREADY)) {
-            this.isReady = false;
+            if (isOwner) {
+                this.isGuestReady = false;
+                ready2Label.setText("Not Ready");
+            }
+            else
+                ready1Label.setText("Not Ready");
         } else if (parts[0].equals(Messages.GAME_START)) {
             Gdx.app.postRunnable(() -> {
                 main.setScreen(new MultiPlayerGameScreen(main, new HealthBar(), roomId, isOwner, selectedSkills));

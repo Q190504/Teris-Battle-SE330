@@ -33,13 +33,15 @@ public class AppColors {
     public static final Color BUTTON_BG = new Color(0.15f, 0.1f, 0.3f, 1f); // #26074D
 
     // Button backgrounds: dark purplish blue for a subtle but distinct button BG
-    public static final Color BUTTON_BG_CYAN = Color.CYAN; // #26074D
+    public static final Color BUTTON_BG_CYAN = new Color(0f, 172f / 255f, 193f / 255f, 1f);
+
 
     // Button backgrounds: dark purplish blue for a subtle but distinct button BG
     public static final Color BUTTON_BG_MAGENTA = Color.MAGENTA; // #26074D
 
     // Button backgrounds: dark purplish blue for a subtle but distinct button BG
-    public static final Color BUTTON_BG_YELLOW = Color.YELLOW; // #26074D
+    public static final Color BUTTON_BG_YELLOW = Color.ORANGE;
+
 
     // Secondary text: soft gray-blue for subtitles and less prominent text
     public static final Color SECONDARY_TEXT = new Color(0.6f, 0.7f, 0.85f, 1f); // #99B3D9

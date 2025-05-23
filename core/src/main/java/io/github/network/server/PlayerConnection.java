@@ -23,7 +23,11 @@ public class PlayerConnection implements Runnable {
         try {
             String input;
             while ((input = in.readLine()) != null) {
-                RoomManager.getInstance().handleInput(this, input);
+                if (input.equals("ping")) {
+                    this.send("pong");
+                } else {
+                    RoomManager.getInstance().handleInput(this, input);
+                }
             }
         } catch (IOException e) {
             System.out.println("Client disconnected: " + socket.getInetAddress());

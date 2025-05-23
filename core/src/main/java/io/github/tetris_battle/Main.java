@@ -15,6 +15,13 @@ public class Main extends Game {
     public static MatchScreen matchScreen;
 
     private Timer reconnectTimer;
+    private long lastPongTime = 0;
+    private static final long TIMEOUT_MS = 10000; // 6 seconds timeout
+
+    private String userName = "";
+
+    public String getUserName () {return userName;}
+    public void setUserName(String userName) {this.userName = userName;}
 
     @Override
     public void create() {
@@ -23,7 +30,6 @@ public class Main extends Game {
 
         connectToServer();
 
-        // Periodically check connection every 3 seconds
         reconnectTimer = new Timer();
         reconnectTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -31,32 +37,49 @@ public class Main extends Game {
                 if (client == null) {
                     System.out.println("Disconnected. Attempting to reconnect...");
                     reconnect();
+                } else {
+                    long now = System.currentTimeMillis();
+                    if (now - lastPongTime > TIMEOUT_MS) {
+                        System.out.println("Server unresponsive. Attempting to reconnect...");
+                        client.close();
+                        client = null;
+                        reconnect();
+                    } else {
+                        client.send("ping");
+                    }
                 }
             }
         }, 3000, 3000);
-
-
     }
 
     public void connectToServer() {
         try {
             client = new ClientConnection("localhost", 5000, message -> {
                 System.out.println("From server: " + message);
+                if (message.equals("pong")) {
+                    lastPongTime = System.currentTimeMillis(); // Update last pong time
+                    return;
+                }
+
                 if (screen instanceof HandleMessageScreen) {
                     ((HandleMessageScreen) screen).HandleMessage(message);
                 }
             });
             client.start();
 
+            // Immediately ping server
+            client.send("ping");
+            lastPongTime = System.currentTimeMillis();
+
             if (screen instanceof HandleMessageScreen) {
-                ((HandleMessageScreen) screen).HandleMessage("conn");
+                ((HandleMessageScreen) screen).HandleMessage(Messages.CONN);
             }
             System.out.println("Connected to host.");
 
         } catch (IOException e) {
             client = null;
             if (screen instanceof HandleMessageScreen) {
-                ((HandleMessageScreen) screen).HandleMessage("no_conn");
+                ((HandleMessageScreen) screen).HandleMessage(Messages.NO_CONN);
             }
             System.out.println("Failed to connect: " + e.getMessage());
         }
@@ -69,8 +92,6 @@ public class Main extends Game {
     public void SetScreen(Screen screen) {
         setScreen(screen);
     }
-
-
 
     @Override
     public void dispose() {

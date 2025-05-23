@@ -5,10 +5,17 @@ import io.github.ui.Messages;
 public class LockOpponentSkill extends Skill {
     private final Player player;
 
+
     public LockOpponentSkill(Player player, float cooldownTime) {
         super(cooldownTime);
         this.player = player;
-        setEffectingTime(5f); //5 seconds
+        setEffectingTime(SkillConfigs.LOCK_OPPONENT_ACTIVE); //5 seconds
+    }
+
+    public LockOpponentSkill(float cooldownTime) {
+        super(cooldownTime);
+        this.player = null;
+        setEffectingTime(SkillConfigs.LOCK_OPPONENT_ACTIVE); //5 seconds
     }
 
     @Override
@@ -19,15 +26,13 @@ public class LockOpponentSkill extends Skill {
     public static String getStaticName() {
         return "Lock Opponent";
     }
+    public static String getStaticInstruction() {
+        return "Lock opponent skill for " + SkillConfigs.LOCK_OPPONENT_ACTIVE + "s." +
+            "\nCooldown: " + SkillConfigs.LOCK_OPPONENT_CD + "s.";
+    }
 
     public String getInstruction() {
         return "Opponent LOCKED";
-    }
-
-    public LockOpponentSkill(float cooldownTime) {
-        super(cooldownTime);
-        this.player = null;
-        setEffectingTime(5f); //5 seconds
     }
 
     @Override

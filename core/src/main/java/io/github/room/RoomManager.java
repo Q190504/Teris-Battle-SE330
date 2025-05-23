@@ -59,6 +59,7 @@ public class RoomManager {
             break;
 
         case Messages.AUTO:
+            player.name = parts[1];
             Matchmaker.getInstance().autoJoin(player);
             break;
 

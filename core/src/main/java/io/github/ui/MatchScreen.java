@@ -54,7 +54,11 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         Label titleLabel = UIFactory.createTitle("TETRIS BATTLE");
         titleLabel.setColor(AppColors.TITLE);
 
-        nameField = new TextField(generateRandomName(), UIFactory.getSkin());
+        if (!main.getUserName().isEmpty()) {
+            nameField = new TextField(main.getUserName(), UIFactory.getSkin());
+        } else {
+            nameField = new TextField(generateRandomName(), UIFactory.getSkin());
+        }
         nameField.setMessageText("Enter Your Name");
         nameField.setColor(AppColors.TEXT_FIELD);
 
@@ -84,7 +88,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
                     Main.client.send(Messages.AUTO + Messages.SEPARATOR + nameField.getText());
             }
         });
-        joinBtn.setColor(AppColors.MULTIPLAYER_LABEL);
+        joinBtn.setColor(AppColors.BUTTON_BG_CYAN);
         joinBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
         createBtn = UIFactory.createTextButton("Create Room", new ClickListener() {
@@ -96,7 +100,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
                 setStatusLabel("Creating room...");
             }
         });
-        createBtn.setColor(AppColors.TITLE);
+        createBtn.setColor(AppColors.BUTTON_BG_MAGENTA);
         createBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
         onlinePanel.add(roomIdField).width(400).height(40);
@@ -121,7 +125,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
                 main.setScreen(new GameScreen(main, new TetrominoSpawner(), new HealthBar()));
             }
         });
-        singlePlayerBtn.setColor(AppColors.SINGLE_LABEL);
+        singlePlayerBtn.setColor(AppColors.BUTTON_BG_YELLOW);
         singlePlayerBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
         singlePanel.add(singleLabel).center().row();
@@ -144,6 +148,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
     @Override
     public void render(float delta) {
+        if (stage == null) return;
         Gdx.gl.glClearColor(AppColors.BACKGROUND.r, AppColors.BACKGROUND.g, AppColors.BACKGROUND.b, AppColors.BACKGROUND.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
@@ -162,9 +167,11 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         if (parts[0].equals(Messages.APPROVED)) {
             String roomId = parts[1];
             String ownerName = parts[2];
+            main.setUserName(nameField.getText());
             main.setScreen(new PrepareScreen(main, roomId, false, ownerName, nameField.getText()));
         } else if (parts[0].equals(Messages.ROOM_CREATED)) {
             String roomId = parts[1];
+            main.setUserName(nameField.getText());
             main.setScreen(new RoomScreen(main, roomId, true, nameField.getText()));
         } else if (parts[0].equals(Messages.NO_CONN)) {
             setStatusLabel("Connection lost. Trying to reconnect...");
