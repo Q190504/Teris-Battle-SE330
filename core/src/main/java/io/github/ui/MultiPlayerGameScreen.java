@@ -125,8 +125,12 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             state.player = new PlayerState();
             state.player.grid = board.getGrid();
             state.player.pieceIndex = board.getCurrentIndex();
-            state.player.health = currentHealth;
-
+            if (isOwner)
+                state.player.health = healthBar.getPivot();
+            else {
+                state.player.health = healthBar.getLastScore();
+                healthBar.setLastScore(0f);
+            }
             Tetromino currentPiece = board.getCurrentRunningPiece();
             state.player.currentPiece = (currentPiece != null) ? currentPiece.toDTO() : null;
             Tetromino nextPiece = board.getNextTetromino();
@@ -367,8 +371,9 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     @Override
     public void HandleMessage(String msg) {
-        if (msg.startsWith("game_state:")) {
-            String json = msg.substring("game_state:".length());
+        String[] parts = msg.split(Messages.SEPARATOR);
+        if (parts[0].equals(Messages.GAME_STATE)) {
+            String json = msg.substring(Messages.GAME_STATE.length() + Messages.SEPARATOR.length());
             GameStateDTO dto = new Gson().fromJson(json, GameStateDTO.class);
             if (!dto.roomId.equals(this.roomId) || dto.ack <= lastReceivedAck) return;
             lastReceivedAck = dto.ack;
@@ -380,14 +385,26 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             tetrominoDTO = dto.player.nextPiece;
             opponentBoard.setNextRunningPiece(tetrominoDTO != null ? Tetromino.fromDTO(tetrominoDTO) : null);
 
-            float opponentPivot = dto.player.health;
-            healthBar.setPivot(100 - opponentPivot);
-        } else if (msg.startsWith("piece:")) {
-            String json = msg.substring("piece:".length());
+            if (isOwner) {
+                float opponentDamage = dto.player.health;
+                healthBar.setPivot(healthBar.getPivot() - opponentDamage);
+            } else {
+                if (healthBar.getLastScore() != 0f) return;
+                float opponentPivot = dto.player.health;
+                healthBar.setPivot(100 - opponentPivot);
+            }
+
+        } else if (parts[0].equals(Messages.PLAYER_LEFT)) {
+            Main.client.send(Messages.LEAVE);
+            showPopup("Opponent has left the game!", "LEAVE", () -> main.setScreen(new MatchScreen(main)));
+
+        } else if (parts[0].equals(Messages.PIECE)) {
+            String json = msg.substring(Messages.PIECE.length() + Messages.SEPARATOR.length());
             Tetromino piece = Tetromino.fromDTO(new Gson().fromJson(json, TetrominoDTO.class));
             player.getBoard().handleSpawn(piece);
-        } else if (msg.startsWith("next_piece:")) {
-            String json = msg.substring("next_piece:".length());
+
+        } else if (parts[0].equals(Messages.NEXT_PIECE)) {
+            String json = msg.substring(Messages.NEXT_PIECE.length() + Messages.SEPARATOR.length());
             Tetromino piece = Tetromino.fromDTO(new Gson().fromJson(json, TetrominoDTO.class));
             player.getBoard().setNextRunningPiece(piece);
         } else if (msg.startsWith("lock_player")) {
