@@ -1,5 +1,7 @@
 package io.github.tetris_battle;
 
+import io.github.ui.Messages;
+
 public class LockOpponentSkill extends Skill {
     private float timer = 0f;
     private final Player player;
@@ -10,6 +12,14 @@ public class LockOpponentSkill extends Skill {
         setEffectingTime(5f); //5 seconds
     }
 
+    @Override
+    public String getName() {
+        return "Lock Opponent";
+    }
+
+    public static String getStaticName() {
+        return "Lock Opponent";
+    }
     public LockOpponentSkill(float cooldownTime) {
         super(cooldownTime);
         this.player = null;
@@ -24,7 +34,7 @@ public class LockOpponentSkill extends Skill {
             if (player!= null) {
                 player.setIsBeingLocked(true);
             } else {
-                Main.client.send("lock_player");
+                Main.client.send(Messages.LOCK_PLAYER);
             }
         }
     }
@@ -39,7 +49,7 @@ public class LockOpponentSkill extends Skill {
                 if (player!= null) {
                     player.setIsBeingLocked(false);
                 } else {
-                    Main.client.send("unlock_player");
+                    Main.client.send(Messages.UNLOCK_PLAYER);
                 }
                 startCooldown();
             }

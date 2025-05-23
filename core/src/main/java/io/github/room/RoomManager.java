@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import io.github.network.server.PlayerConnection;
 import io.github.tetris_battle.Tetromino;
 import io.github.data.TetrominoDTO;
+import io.github.ui.Messages;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,40 +50,43 @@ public class RoomManager {
         String roomId;
         Room room;
         String json;
+
         switch (parts[0]) {
-        case "create":
+        case Messages.CREATE:
             room = createRoom(player);
-            player.send("room_created:" + room.getRoomId());
+            player.name = parts[1];
+            player.send(Messages.ROOM_CREATED + Messages.SEPARATOR + room.getRoomId());
             break;
-        case "auto":
+
+        case Messages.AUTO:
             Matchmaker.getInstance().autoJoin(player);
             break;
-        case "join":
-            if (parts.length < 3) {
-                player.send("lack_of_information");
-            }
+
+        case Messages.JOIN:
             room = rooms.get(parts[1]);
             player.name = parts[2];
             System.out.println(player);
             if (room != null) {
                 room.requestJoin(player);
             } else {
-                player.send("room_not_found");
+                player.send(Messages.ROOM_NOT_FOUND);
             }
             break;
-        case "accept":
+
+        case Messages.ACCEPT:
             room = player.currentRoom;
             if (room != null) {
                 room.approvePlayer(parts[1]);
             }
             break;
-        case "leave":
+
+        case Messages.LEAVE:
             if (player.currentRoom != null) {
                 player.currentRoom.removePlayer(player);
             }
             break;
 
-        case "request_piece":
+        case Messages.REQUEST_PIECE:
             int index = Integer.parseInt(parts[1]);
             room = player.currentRoom;
 
@@ -90,24 +94,25 @@ public class RoomManager {
                 Tetromino piece = room.getPiece(index);
                 TetrominoDTO dto = piece.toDTO();
                 json = new Gson().toJson(dto);
-                player.send("piece:" + json);
+                player.send(Messages.PIECE + Messages.SEPARATOR + json);
 
                 piece = room.getNextPiece(index);
                 dto = piece.toDTO();
                 json = new Gson().toJson(dto);
-                player.send("next_piece:" + json);
-
+                player.send(Messages.NEXT_PIECE + Messages.SEPARATOR + json);
             }
             break;
-        case "start":
+
+        case Messages.START:
             Room startRoom = player.currentRoom;
             if (startRoom != null && startRoom.getOwner() == player) {
                 startRoom.startGame();
                 System.out.println("Starting game");
             } else {
-                player.send("not_owner_or_invalid_room");
+                player.send(Messages.NOT_OWNER_OR_INVALID_ROOM);
             }
             break;
+
         default:
             room = player.currentRoom;
             if (room != null) {
@@ -115,7 +120,6 @@ public class RoomManager {
             }
             break;
         }
-
-
     }
+
 }

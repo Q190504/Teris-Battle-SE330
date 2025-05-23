@@ -30,6 +30,7 @@ public class PlayerConnection implements Runnable {
         } finally {
             try {
                 socket.close();
+                RoomManager.getInstance().handleInput(this, "leave");
                 System.out.println("Connection closed for: " + socket.getInetAddress());
             } catch (IOException e) {
                 e.printStackTrace();

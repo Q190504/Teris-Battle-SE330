@@ -2,21 +2,22 @@ package io.github.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
 import java.util.UUID;
 
 import io.github.tetris_battle.*;
 
 public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
-    private Main main;
+    private final Main main;
 
     private Stage stage;
-    private Skin skin;
-
     private Table table;
     private TextField nameField;
     private TextField roomIdField;
@@ -24,8 +25,9 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
     private TextButton createBtn;
     private TextButton joinBtn;
-    private TextButton autoBtn;
     private TextButton singlePlayerBtn;
+
+    private Dialog dialog;
 
     public MatchScreen(Main main) {
         this.main = main;
@@ -44,78 +46,105 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
 
-        skin = new Skin(Gdx.files.internal("assets\\uiskin.json"));
-
         table = new Table();
         table.setFillParent(true);
-        table.center();
+        table.center().pad(40);
+        table.defaults().pad(10);
 
-        Label titleLabel = new Label("Tetris Battle - Matchmaking", skin);
+        Label titleLabel = UIFactory.createTitle("TETRIS BATTLE");
+        titleLabel.setColor(AppColors.TITLE);
 
-        nameField = new TextField(generateRandomName(), skin);
+        nameField = new TextField(generateRandomName(), UIFactory.getSkin());
         nameField.setMessageText("Enter Your Name");
+        nameField.setColor(AppColors.TEXT_FIELD);
 
-        roomIdField = new TextField("", skin);
-        roomIdField.setMessageText("Enter Room ID");
+        // Multiplayer Panel
+        Table onlinePanel = new Table(UIFactory.getSkin());
+        onlinePanel.pad(20);
+        onlinePanel.setColor(AppColors.PANEL_BG);
+        onlinePanel.defaults().pad(8);
 
-        createBtn = new TextButton("Create Room", skin);
-        joinBtn = new TextButton("Join by ID", skin);
-        autoBtn = new TextButton("Free Join", skin);
-        singlePlayerBtn = new TextButton("Start Single Mode", skin);
-        statusLabel = new Label("", skin);
+        Label multiplayerLabel = UIFactory.createLabel("Multiplayer");
+        multiplayerLabel.setColor(AppColors.MULTIPLAYER_LABEL);
+        multiplayerLabel.setFontScale(1.2f);
+        onlinePanel.add(multiplayerLabel).colspan(2).center().padBottom(15).row();
 
-        table.add(titleLabel).colspan(2).padBottom(20).row();
-        table.add(nameField).colspan(2).width(200).pad(10).row();
-        table.add(roomIdField).width(200).pad(10);
-        table.add(joinBtn).pad(10).row();
-        table.add(createBtn).colspan(2).pad(10).row();
-        table.add(autoBtn).colspan(2).pad(10).row();
-        table.add(singlePlayerBtn).colspan(2).pad(10).row();
-        table.add(statusLabel).colspan(2).padTop(20);
+        roomIdField = new TextField("", UIFactory.getSkin());
+        roomIdField.setMessageText("Leave blank for free match");
+        roomIdField.setColor(AppColors.TEXT_FIELD);
 
-        stage.addActor(table);
+        joinBtn = UIFactory.createTextButton("Join a room", new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                if (joinBtn.isDisabled()) return;
 
-        createBtn.addListener(e -> {
-            if (createBtn.isPressed() && !createBtn.isDisabled()) {
-                createBtn.setDisabled(true);
-                Main.client.send("create:" + nameField.getText());
-                statusLabel.setText("Creating room...");
+                if (roomIdField.getText().length() > 0)
+                    Main.client.send(Messages.JOIN + Messages.SEPARATOR + roomIdField.getText() + Messages.SEPARATOR + nameField.getText());
+                else
+                    Main.client.send(Messages.AUTO + Messages.SEPARATOR + nameField.getText());
             }
-            return true;
         });
+        joinBtn.setColor(AppColors.MULTIPLAYER_LABEL);
+        joinBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
-        joinBtn.addListener(e -> {
-            if (joinBtn.isPressed() && !joinBtn.isDisabled()) {
-                joinBtn.setDisabled(true);
-                Main.client.send("join:" + roomIdField.getText() + ":" + nameField.getText());
-                statusLabel.setText("Requesting to join...");
+        createBtn = UIFactory.createTextButton("Create Room", new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                if (createBtn.isDisabled()) return;
+
+                Main.client.send(Messages.CREATE + Messages.SEPARATOR + nameField.getText());
+                setStatusLabel("Creating room...");
             }
-            return true;
         });
+        createBtn.setColor(AppColors.TITLE);
+        createBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
-        autoBtn.addListener(e -> {
-            if (autoBtn.isPressed() && !autoBtn.isDisabled()) {
-                autoBtn.setDisabled(true);
-                Main.client.send("auto:" + nameField.getText());
-                statusLabel.setText("Searching for room...");
-            }
-            return true;
-        });
+        onlinePanel.add(roomIdField).width(400).height(40);
+        onlinePanel.add(joinBtn).width(200).height(40).row();
+        onlinePanel.add(createBtn).colspan(2).width(620).height(40).padTop(15).row();
 
-        singlePlayerBtn.addListener(e -> {
-            if (singlePlayerBtn.isPressed() && !singlePlayerBtn.isDisabled()) {
-                singlePlayerBtn.setDisabled(true);
+        // Single Player Panel
+        Table singlePanel = new Table(UIFactory.getSkin());
+        singlePanel.pad(20);
+        singlePanel.setColor(AppColors.PANEL_BG);
+        singlePanel.defaults().pad(8);
+
+        Label singleLabel = UIFactory.createLabel("Single Player");
+        singleLabel.setColor(AppColors.SINGLE_LABEL);
+        singleLabel.setFontScale(1.2f);
+
+        singlePlayerBtn = UIFactory.createTextButton("Start Single Mode", new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                if (singlePlayerBtn.isDisabled()) return;
+
                 main.setScreen(new GameScreen(main, new TetrominoSpawner(), new HealthBar()));
             }
-            return true;
         });
+        singlePlayerBtn.setColor(AppColors.SINGLE_LABEL);
+        singlePlayerBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
 
-        disableAllButtons();
+        singlePanel.add(singleLabel).center().row();
+        singlePanel.add(singlePlayerBtn).width(300).height(40).padTop(10).row();
+
+        // Status label
+        statusLabel = UIFactory.createLabel("");
+        statusLabel.setWrap(true);
+        statusLabel.setColor(AppColors.TEXT_FIELD);
+
+        // Main layout
+        table.add(titleLabel).center().padBottom(40).row();
+        table.add(nameField).width(300).height(40).padBottom(30).row();
+        table.add(onlinePanel).padBottom(30).row();
+        table.add(singlePanel).padBottom(30).row();
+        table.add(statusLabel).width(400).height(40);
+
+        stage.addActor(table);
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(AppColors.BACKGROUND.r, AppColors.BACKGROUND.g, AppColors.BACKGROUND.b, AppColors.BACKGROUND.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
@@ -124,40 +153,78 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
     @Override
     public void dispose() {
         stage.dispose();
-        skin.dispose();
     }
 
     @Override
     public void HandleMessage(String msg) {
         System.out.println(msg);
-        if (msg.startsWith("approved:")) {
-            String roomId = msg.split(":")[1];
-            main.setScreen(new RoomScreen(main, roomId));
-        } else if (msg.startsWith("room_created:")) {
-            String roomId = msg.split(":")[1];
-            main.setScreen(new RoomScreen(main, roomId));
-        }  else if (msg.equals("no_conn")) {
+        String[] parts = msg.split(Messages.SEPARATOR);
+        if (parts[0].equals(Messages.APPROVED)) {
+            String roomId = parts[1];
+            String ownerName = parts[2];
+            main.setScreen(new PrepareScreen(main, roomId, false, ownerName, nameField.getText()));
+        } else if (parts[0].equals(Messages.ROOM_CREATED)) {
+            String roomId = parts[1];
+            main.setScreen(new RoomScreen(main, roomId, true, nameField.getText()));
+        } else if (parts[0].equals(Messages.NO_CONN)) {
             setStatusLabel("Connection lost. Trying to reconnect...");
             disableAllButtons();
-
-        } else if (msg.equals("conn")) {
+        } else if (parts[0].equals(Messages.CONN)) {
+            setStatusLabel("");
             enableAllButtons();
-
-        } else {
-            setStatusLabel(msg);
+        } else if (parts[0].equals(Messages.ROOM_FULL)) {
+            showPopup("Room is full");
+            enableAllButtons();
+        } else if (parts[0].equals(Messages.REJECTED)) {
+            showPopup("Your request is rejected, please find another room.");
+            enableAllButtons();
+        } else if (parts[0].equals(Messages.ROOM_CLOSED)) {
+            showPopup("Room closed by owner, please find another room.");
+            enableAllButtons();
+        } else if (parts[0].equals(Messages.JOIN_REQUEST)) {
+            String roomId = parts[1];
+            showPopup("Requesting to join room " + roomId, "LEAVE", new Runnable() {
+                @Override
+                public void run() {
+                    Main.client.send(Messages.LEAVE);
+                    enableAllButtons();
+                }
+            });
+            disableAllButtons();
+        } else if (parts[0].equals(Messages.ROOM_NOT_FOUND)) {
+            showPopup("Room not found");
+            enableAllButtons();
         }
     }
 
     private void disableAllButtons() {
         createBtn.setDisabled(true);
         joinBtn.setDisabled(true);
-        autoBtn.setDisabled(true);
+        //singlePlayerBtn.setDisabled(true);
     }
 
     private void enableAllButtons() {
         createBtn.setDisabled(false);
         joinBtn.setDisabled(false);
-        autoBtn.setDisabled(false);
         singlePlayerBtn.setDisabled(false);
+    }
+
+    private void showPopup(String message) {
+        showPopup(message, "OK", null);
+    }
+
+    private void showPopup(String message, String action) {
+        showPopup(message, action, null);
+    }
+
+    private void showPopup(String message, Runnable onOk) {
+        showPopup(message, "OK", onOk);
+    }
+
+    private void showPopup(String message, String action, Runnable onOk) {
+        if (dialog != null)
+            dialog.hide();
+        dialog = UIFactory.createDialog("Notice", message, action, onOk);
+        dialog.show(stage);
     }
 }
