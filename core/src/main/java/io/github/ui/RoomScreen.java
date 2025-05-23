@@ -122,10 +122,10 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen {
             acceptBtn.setColor(AppColors.BUTTON_BG);
             acceptBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
             acceptBtn.getLabel().setFontScale(0.9f);
-            acceptBtn.setSize(90, 30);
+            acceptBtn.setSize(120, 30);
 
             requestRow.add(requestLabel).expandX().left().padRight(15);
-            requestRow.add(acceptBtn).right().width(90).height(30);
+            requestRow.add(acceptBtn).right().width(120).height(30);
             joinRequestsTable.add(requestRow).fillX().padBottom(8).row();
 
             requestRows.put(request, requestRow);
@@ -135,7 +135,7 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen {
     @Override
     public void render(float delta) {
         if (stage == null) return;
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(AppColors.BACKGROUND.r, AppColors.BACKGROUND.g, AppColors.BACKGROUND.b, AppColors.BACKGROUND.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
@@ -165,6 +165,13 @@ public class RoomScreen extends ScreenAdapter implements HandleMessageScreen {
                     statusLabel.setText("Player " + playerId + " left the room.");
                 } else {
                     statusLabel.setText("A player left the room.");
+                }
+            });
+        } else if (parts[0].equals(Messages.NO_CONN)) {
+            showPopup("Disconnected from the server.", new Runnable() {
+                @Override
+                public void run() {
+                    main.setScreen(new MatchScreen(main));
                 }
             });
         }

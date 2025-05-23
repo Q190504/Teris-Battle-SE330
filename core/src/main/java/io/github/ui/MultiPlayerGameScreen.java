@@ -77,7 +77,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         Map<String, Skill> mapName = new HashMap<>();
         for (String selectedSkill : selectedSkills) {
             if (selectedSkill.equals(ExtraPointsSkill.getStaticName())) {
-                Skill extraPointSkill = new ExtraPointsSkill(player.getScoreManager(), 20f);
+                Skill extraPointSkill = new ExtraPointsSkill(player.getScoreManager(), SkillConfigs.EXTRA_POINT_CD);
 
                 // Declare button reference holder as final array to allow modification inside lambda
                 final TextButton[] extraPointBtn = new TextButton[1];
@@ -92,7 +92,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 map.put(extraPointBtn[0], extraPointSkill);
                 mapName.put(extraPointSkill.getName(), extraPointSkill);
             } else if (selectedSkill.equals(LockOpponentSkill.getStaticName())) {
-                Skill lockOpponentSkill = new LockOpponentSkill(10f);
+                Skill lockOpponentSkill = new LockOpponentSkill(SkillConfigs.LOCK_OPPONENT_CD);
 
                 final TextButton[] lockOpponentBtn = new TextButton[1];
                 lockOpponentBtn[0] = UIFactory.createTextButton(lockOpponentSkill.getName(), new ClickListener() {
@@ -106,7 +106,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 map.put(lockOpponentBtn[0], lockOpponentSkill);
                 mapName.put(lockOpponentSkill.getName(), lockOpponentSkill);
             } else if (selectedSkill.equals(SpeedBoostSkill.getStaticName())) {
-                Skill speedBoostSkill = new SpeedBoostSkill(player, 20f);
+                Skill speedBoostSkill = new SpeedBoostSkill(player, SkillConfigs.SPEED_BOOST_CD);
 
                 final TextButton[] speedBoostBtn = new TextButton[1];
                 speedBoostBtn[0] = UIFactory.createTextButton(speedBoostSkill.getName(), new ClickListener() {
@@ -133,7 +133,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
         Tetromino.loadAssets();
 
-        leaveRoomBtn = UIFactory.createTextButton("LEAVE ROOM", new ClickListener() {
+        leaveRoomBtn = UIFactory.createTextButton("LEAVE", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 Main.client.send(Messages.LEAVE);
@@ -160,7 +160,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             if (skill.isActive()) {
                 button.setDisabled(true);
                 button.setColor(AppColors.BUTTON_BG_MAGENTA);
-                button.setText(skill.getInstruction() + (int)skill.getRemainingActiveTime());
+                button.setText(skill.getInstruction() + " (" + (int)skill.getRemainingActiveTime() + ")");
             } else {
                 boolean canUse = skill.canActivate();
                 button.setDisabled(!canUse);
@@ -208,12 +208,16 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private void checkEndGame() {
         if (player.isFullBoard() || healthBar.isEndGame()) {
             Gdx.app.log("Event", "End Game");
-            // Optionally: main.setScreen(new GameOverScreen());
+            //Left side: player
+            //Main.client.sent("end_game:win")
+            // Optionally: main.setScreen(new GameOverScreen(Main main, bool win/lose, long totaltime));
         }
     }
 
     @Override
     public void render(float delta) {
+        if (stage == null) return;
+
         updateSkills(delta);
         checkEndGame();
         player.update(delta);
@@ -294,11 +298,11 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             if (skills != null && !skills.isEmpty()) {
                 float buttonX = (int) previewXPos + previewWidth - SIZE;
                 float buttonY = previewYPos + previewHeight / 2;
-                float buttonSpacing = 50;
+                float buttonSpacing = 20;
 
                 int index = 0;
                 for (TextButton btn : skills.keySet()) {
-                    btn.setSize(200, 40);
+                    btn.setSize(270, 40);
                     btn.setPosition(buttonX, buttonY - index * (btn.getHeight() + buttonSpacing));
                     if (btn.getStage() == null) {
                         stage.addActor(btn); // avoid re-adding
@@ -319,7 +323,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         healthBar.draw(shapeRenderer, startPos, maxHeight);
         shapeRenderer.end();
 
-        leaveRoomBtn.setPosition(startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
+        leaveRoomBtn.setPosition(startPos + healthBar.getWidth() + 0.25f * SIZE, maxHeight - (float) SIZE /2);
         leaveRoomBtn.setColor(Color.RED);
         stage.addActor(leaveRoomBtn);
     }
@@ -369,6 +373,13 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
         } else if (parts[0].equals(Messages.UNLOCK_PLAYER)) {
             player.setIsBeingLocked(false);
+        } else if (parts[0].equals(Messages.NO_CONN)) {
+            showPopup("Disconnected from the server.", new Runnable() {
+                @Override
+                public void run() {
+                    main.setScreen(new MatchScreen(main));
+                }
+            });
         }
     }
 

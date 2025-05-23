@@ -3,21 +3,20 @@ package io.github.ui;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 public class UIFactory {
     private static final Skin skin = new Skin(Gdx.files.internal("assets/quantum/quantum-horizon-ui.json"));
 
     public static Label createLabel(String text) {
-        Label label = new Label(text, skin);
-        return label;
+        return new Label(text, skin);
     }
 
     public static Label createTitle(String text) {
-        Label label = new Label(text, skin, "title");
-        return label;
+        return new Label(text, skin, "title");
+    }
+
+    public static TextTooltip createTextTooltip(String text) {
+        return new TextTooltip(text, skin);
     }
 
     public static TextButton createTextButton(String text, ClickListener listener) {
