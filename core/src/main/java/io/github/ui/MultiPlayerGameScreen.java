@@ -1,6 +1,7 @@
 package io.github.ui;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -38,6 +39,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private TextButton leaveRoomBtn;
 
     private Map<TextButton, Skill> skills;
+    private Map<String, Skill> skillNames;
 
     Dialog dialog;
     private float gameStateTimer = 0f;
@@ -72,14 +74,14 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     private void prepareSkills(Set<String> selectedSkills) {
         Map<TextButton, Skill> map = new HashMap<>();
-
+        Map<String, Skill> mapName = new HashMap<>();
         for (String selectedSkill : selectedSkills) {
             if (selectedSkill.equals(ExtraPointsSkill.getStaticName())) {
-                Skill extraPointSkill = new ExtraPointsSkill(player.getScoreManager(), 90);
+                Skill extraPointSkill = new ExtraPointsSkill(player.getScoreManager(), 20f);
 
                 // Declare button reference holder as final array to allow modification inside lambda
                 final TextButton[] extraPointBtn = new TextButton[1];
-                extraPointBtn[0] = UIFactory.createTextButton("Double Score", new ClickListener() {
+                extraPointBtn[0] = UIFactory.createTextButton(extraPointSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         if (extraPointBtn[0].isDisabled()) return;
@@ -88,12 +90,12 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 });
 
                 map.put(extraPointBtn[0], extraPointSkill);
-
+                mapName.put(extraPointSkill.getName(), extraPointSkill);
             } else if (selectedSkill.equals(LockOpponentSkill.getStaticName())) {
                 Skill lockOpponentSkill = new LockOpponentSkill(10f);
 
                 final TextButton[] lockOpponentBtn = new TextButton[1];
-                lockOpponentBtn[0] = UIFactory.createTextButton("Lock Opponent", new ClickListener() {
+                lockOpponentBtn[0] = UIFactory.createTextButton(lockOpponentSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         if (lockOpponentBtn[0].isDisabled()) return;
@@ -102,10 +104,26 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 });
 
                 map.put(lockOpponentBtn[0], lockOpponentSkill);
+                mapName.put(lockOpponentSkill.getName(), lockOpponentSkill);
+            } else if (selectedSkill.equals(SpeedBoostSkill.getStaticName())) {
+                Skill speedBoostSkill = new SpeedBoostSkill(player, 20f);
+
+                final TextButton[] speedBoostBtn = new TextButton[1];
+                speedBoostBtn[0] = UIFactory.createTextButton(speedBoostSkill.getName(), new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        if (speedBoostBtn[0].isDisabled()) return;
+                        player.useSkill(speedBoostSkill);
+                    }
+                });
+
+                map.put(speedBoostBtn[0], speedBoostSkill);
+                mapName.put(speedBoostSkill.getName(), speedBoostSkill);
             }
         }
 
         this.skills = map; // Store for use in update loop or elsewhere
+        this.skillNames = mapName;
     }
 
 
@@ -141,10 +159,15 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
             if (skill.isActive()) {
                 button.setDisabled(true);
-                button.setText(skill.getName() + " is active");
+                button.setColor(AppColors.BUTTON_BG_MAGENTA);
+                button.setText(skill.getInstruction() + (int)skill.getRemainingActiveTime());
             } else {
                 boolean canUse = skill.canActivate();
                 button.setDisabled(!canUse);
+                if (canUse)
+                    button.setColor(AppColors.BUTTON_BG_CYAN);
+                else
+                    button.setColor(AppColors.PANEL_BG_LIGHT);
                 button.setText(canUse
                     ? skill.getName()
                     : skill.getName() + " (" + secondsLeft + ")");
@@ -265,6 +288,25 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             piece.draw(batch, previewXPos, previewYPos, ROWS);
             batch.end();
         }
+
+        // Draw skill buttons if available
+        if (isLeft) {
+            if (skills != null && !skills.isEmpty()) {
+                float buttonX = (int) previewXPos + previewWidth - SIZE;
+                float buttonY = previewYPos + previewHeight / 2;
+                float buttonSpacing = 50;
+
+                int index = 0;
+                for (TextButton btn : skills.keySet()) {
+                    btn.setSize(200, 40);
+                    btn.setPosition(buttonX, buttonY - index * (btn.getHeight() + buttonSpacing));
+                    if (btn.getStage() == null) {
+                        stage.addActor(btn); // avoid re-adding
+                    }
+                    index++;
+                }
+            }
+        }
     }
 
     private void drawHealthBarAndUI(float delta) {
@@ -278,24 +320,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         shapeRenderer.end();
 
         leaveRoomBtn.setPosition(startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
+        leaveRoomBtn.setColor(Color.RED);
         stage.addActor(leaveRoomBtn);
-
-        // Draw skill buttons if available
-        if (skills != null && !skills.isEmpty()) {
-            float buttonX = startPos + healthBar.getWidth() + 0.5f * SIZE;
-            float buttonY = maxHeight - 60; // start a bit lower than health bar
-            float buttonSpacing = 50;
-
-            int index = 0;
-            for (TextButton btn : skills.keySet()) {
-                btn.setSize(150, 40);
-                btn.setPosition(buttonX, buttonY - index * (btn.getHeight() + buttonSpacing));
-                if (btn.getStage() == null) {
-                    stage.addActor(btn); // avoid re-adding
-                }
-                index++;
-            }
-        }
     }
 
 
@@ -372,6 +398,13 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         else if (keycode == Input.Keys.RIGHT && !player.isBeingLocked()) player.movePiece(1);
         else if (keycode == Input.Keys.DOWN) player.dropPiece();
         else if (keycode == Input.Keys.UP) player.rotatePiece();
+        else if (keycode == Input.Keys.SPACE) {
+            Skill speedBoostSkill = skillNames.get(SpeedBoostSkill.getStaticName());
+            if (speedBoostSkill != null)
+            {
+                ((SpeedBoostSkill) speedBoostSkill).performSpeedDrop();
+            }
+        }
         return true;
     }
 

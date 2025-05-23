@@ -7,16 +7,10 @@ public class Player {
     private String name;
     private int score;
     private Board board;
-//    private ScoreManager scoreManager;
-//    private TetrominoSpawner spawner;
-//    private HealthBar healthBar;
-    // private List<Skill> activatedSkills;
 
     private boolean isBeingLocked = false;
 
     public Player(TetrominoSpawner spawner, HealthBar healthBar, String roomId, Side side) {
-//        this.spawner = spawner;
-//        this.healthBar = healthBar;
         this.board = new Board(20, 10, side, spawner, healthBar, roomId);
     }
     public Player(Board board) {
@@ -96,6 +90,6 @@ public class Player {
     public void dropCurrentPieceToBottom() {
         board.dropPieceToBottom();
     }
-    
+
 }
 

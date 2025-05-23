@@ -3,7 +3,6 @@ package io.github.tetris_battle;
 import io.github.ui.Messages;
 
 public class LockOpponentSkill extends Skill {
-    private float timer = 0f;
     private final Player player;
 
     public LockOpponentSkill(Player player, float cooldownTime) {
@@ -20,6 +19,11 @@ public class LockOpponentSkill extends Skill {
     public static String getStaticName() {
         return "Lock Opponent";
     }
+
+    public String getInstruction() {
+        return "Opponent LOCKED";
+    }
+
     public LockOpponentSkill(float cooldownTime) {
         super(cooldownTime);
         this.player = null;
@@ -30,7 +34,7 @@ public class LockOpponentSkill extends Skill {
     public void activate() {
         if (canActivate()) {
             active = true;
-            timer = getEffectingTime();
+            activeTimer = getEffectingTime();
             if (player!= null) {
                 player.setIsBeingLocked(true);
             } else {
@@ -43,8 +47,8 @@ public class LockOpponentSkill extends Skill {
     public void update(float delta) {
         super.update(delta);
         if (active) {
-            timer -= delta;
-            if (timer <= 0) {
+            activeTimer -= delta;
+            if (activeTimer <= 0) {
                 active = false;
                 if (player!= null) {
                     player.setIsBeingLocked(false);

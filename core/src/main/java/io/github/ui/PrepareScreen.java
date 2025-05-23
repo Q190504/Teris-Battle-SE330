@@ -70,14 +70,14 @@ public class PrepareScreen extends ScreenAdapter implements HandleMessageScreen 
         // Skill buttons
         skillBtn1 = createSkillButton(LockOpponentSkill.getStaticName());
         skillBtn2 = createSkillButton(ExtraPointsSkill.getStaticName());
-        skillBtn3 = createSkillButton("Skill C");
+        skillBtn3 = createSkillButton(SpeedBoostSkill.getStaticName());
 
         // Buttons container for skills
         Table skillsTable = new Table();
         skillsTable.defaults().pad(10);
-        skillsTable.add(skillBtn1).width(120).height(40);
-        skillsTable.add(skillBtn2).width(120).height(40);
-        skillsTable.add(skillBtn3).width(120).height(40);
+        skillsTable.add(skillBtn1).width(200).height(40);
+        skillsTable.add(skillBtn2).width(200).height(40);
+        skillsTable.add(skillBtn3).width(200).height(40);
 
         // Start button (owner only)
         startButton = UIFactory.createTextButton("Start Game", new ClickListener() {

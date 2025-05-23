@@ -1,7 +1,7 @@
 package io.github.tetris_battle;
 
 public class SpeedBoostSkill extends Skill {
-    private float activeTimer = 0f; // Timer để đếm thời gian skill đang active
+
     private final Player player;
 
     public SpeedBoostSkill(Player player, float cooldownTime) {
@@ -17,6 +17,19 @@ public class SpeedBoostSkill extends Skill {
     }
 
     @Override
+    public String getName() {
+        return "Boost Speed";
+    }
+
+    public static String getStaticName() {
+        return "Boost Speed";
+    }
+
+    public String getInstruction() {
+        return "Press SPACE";
+    }
+
+    @Override
     public void activate() {
         if (canActivate()) {
             active = true;
@@ -28,7 +41,7 @@ public class SpeedBoostSkill extends Skill {
     @Override
     public void update(float delta) {
         super.update(delta); // Update cooldown timer
-        
+
         if (active) {
             activeTimer -= delta;
             if (activeTimer <= 0) {
@@ -49,10 +62,5 @@ public class SpeedBoostSkill extends Skill {
         if (active && player != null) {
             player.dropCurrentPieceToBottom();
         }
-    }
-
-    // Method to get remaining active time
-    public float getRemainingActiveTime() {
-        return active ? activeTimer : 0f;
     }
 }
