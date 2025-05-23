@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
 import io.github.data.TetrominoDTO;
+import io.github.ui.Messages;
 
 public class Board {
     private final int ROWS;
@@ -170,7 +171,7 @@ public class Board {
             nextRunningPiece = spawner.peekNextTetromino(currentIndex + 1);
             handleSpawn(piece);
         } else {
-            Main.client.send("request_piece:" + currentIndex);
+            Main.client.send(Messages.REQUEST_PIECE + Messages.SEPARATOR + currentIndex);
         }
 
     }

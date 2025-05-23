@@ -11,6 +11,10 @@ import com.google.gson.Gson;
 import io.github.data.*;
 import io.github.tetris_battle.*;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private final int ROWS = 20, COLS = 10, SIZE = 30;
     private final int spaceBetween2Boards = SIZE * 2;
@@ -19,6 +23,7 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private Main main;
     private String roomId;
     private HealthBar healthBar;
+    private boolean isOwner;
 
     private Player player;
     private Board opponentBoard;
@@ -32,22 +37,18 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     private Label leftNextPieceLabel, rightNextPieceLabel;
     private TextButton leaveRoomBtn;
 
-    private TextButton extraPointBtn;
-    private TextButton lockOpponentBtn;
-    private TextButton speedBoostBtn;
+    private Map<TextButton, Skill> skills;
 
-    private ExtraPointsSkill activeExtraPointSkill;
-    private LockOpponentSkill activeLockOpponentSkill;
-
+    Dialog dialog;
     private float gameStateTimer = 0f;
     private final float GAME_STATE_INTERVAL = 0.1f;
-    private int lastSentAck = 0;
     private int lastReceivedAck = 0;
 
-    public MultiPlayerGameScreen(Main main, HealthBar healthBar, String roomId) {
+    public MultiPlayerGameScreen(Main main, HealthBar healthBar, String roomId, boolean isOwner, Set<String> selectedSkills) {
         this.main = main;
         this.roomId = roomId;
         this.healthBar = healthBar;
+        this.isOwner = isOwner;
 
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
@@ -58,65 +59,103 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         this.healthBar.setWidth(COLS * SIZE * 2 + spaceBetween2Boards);
 
         stage = new Stage();
-        skin = new Skin(Gdx.files.internal("assets/uiskin.json"));
+        skin = UIFactory.getSkin();
 
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(stage);
         multiplexer.addProcessor(this);
         Gdx.input.setInputProcessor(multiplexer);
 
+        prepareSkills(selectedSkills);
         setupUI();
     }
 
+    private void prepareSkills(Set<String> selectedSkills) {
+        Map<TextButton, Skill> map = new HashMap<>();
+
+        for (String selectedSkill : selectedSkills) {
+            if (selectedSkill.equals(ExtraPointsSkill.getStaticName())) {
+                Skill extraPointSkill = new ExtraPointsSkill(player.getScoreManager(), 90);
+
+                // Declare button reference holder as final array to allow modification inside lambda
+                final TextButton[] extraPointBtn = new TextButton[1];
+                extraPointBtn[0] = UIFactory.createTextButton("Double Score", new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        if (extraPointBtn[0].isDisabled()) return;
+                        player.useSkill(extraPointSkill);
+                    }
+                });
+
+                map.put(extraPointBtn[0], extraPointSkill);
+
+            } else if (selectedSkill.equals(LockOpponentSkill.getStaticName())) {
+                Skill lockOpponentSkill = new LockOpponentSkill(10f);
+
+                final TextButton[] lockOpponentBtn = new TextButton[1];
+                lockOpponentBtn[0] = UIFactory.createTextButton("Lock Opponent", new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        if (lockOpponentBtn[0].isDisabled()) return;
+                        player.useSkill(lockOpponentSkill);
+                    }
+                });
+
+                map.put(lockOpponentBtn[0], lockOpponentSkill);
+            }
+        }
+
+        this.skills = map; // Store for use in update loop or elsewhere
+    }
+
+
     private void setupUI() {
-        leftNextPieceLabel = new Label("NEXT PIECE", skin);
-        rightNextPieceLabel = new Label("NEXT PIECE", skin);
+        leftNextPieceLabel = UIFactory.createLabel("NEXT PIECE");
+        rightNextPieceLabel = UIFactory.createLabel("NEXT PIECE");
 
         Tetromino.loadAssets();
-        leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
-        leaveRoomBtn.setPosition(startPos + healthBar.getWidth() + SIZE, ROWS * SIZE + 100);
-        leaveRoomBtn.addListener(new ClickListener() {
+
+        leaveRoomBtn = UIFactory.createTextButton("LEAVE ROOM", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                main.setScreen(new MatchScreen(main)); // Or any other screen
+                Main.client.send(Messages.LEAVE);
+                main.setScreen(new MatchScreen(main));
             }
         });
         stage.addActor(leaveRoomBtn);
 
-        //Create button
-        leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
-        extraPointBtn = new TextButton("X2", skin);
-        lockOpponentBtn = new TextButton("Lock Opponent", skin);
-
-        extraPointBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (extraPointBtn.isDisabled())
-                    return;
-                activeExtraPointSkill = new ExtraPointsSkill(player.getScoreManager(), 90);
-                player.useSkill(activeExtraPointSkill);
-            }
-        });
-
-        lockOpponentBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                if (lockOpponentBtn.isDisabled())
-                    return;
-                activeLockOpponentSkill = new LockOpponentSkill(10f);
-                player.useSkill(activeLockOpponentSkill);
-            }
-        });
+        for (Map.Entry<TextButton, Skill> entry : skills.entrySet())
+        {
+            stage.addActor(entry.getKey());
+        }
     }
 
-    float lastSentHealth = 0.0f;
+    private void updateSkills(float delta) {
+        for (Map.Entry<TextButton, Skill> entry : skills.entrySet()) {
+            TextButton button = entry.getKey();
+            Skill skill = entry.getValue();
+
+            skill.update(delta);
+
+            int secondsLeft = (int) Math.ceil(skill.getCurrentCooldown());
+
+            if (skill.isActive()) {
+                button.setDisabled(true);
+                button.setText(skill.getName() + " is active");
+            } else {
+                boolean canUse = skill.canActivate();
+                button.setDisabled(!canUse);
+                button.setText(canUse
+                    ? skill.getName()
+                    : skill.getName() + " (" + secondsLeft + ")");
+            }
+        }
+    }
+
     private void sendGameState(float delta) {
         gameStateTimer += delta;
 
-        float currentHealth = healthBar.getPivot();
-        boolean healthChanged = currentHealth != lastSentHealth;
-
-        if (gameStateTimer >= GAME_STATE_INTERVAL || healthChanged) {
+        if (gameStateTimer >= GAME_STATE_INTERVAL) {
             gameStateTimer = 0;
 
             Board board = player.getBoard();
@@ -125,22 +164,20 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             state.player = new PlayerState();
             state.player.grid = board.getGrid();
             state.player.pieceIndex = board.getCurrentIndex();
-            state.player.health = currentHealth;
-
+            if (isOwner)
+                state.player.health = healthBar.getPivot();
+            else {
+                state.player.health = healthBar.getLastScore();
+                healthBar.setLastScore(0f);
+            }
             Tetromino currentPiece = board.getCurrentRunningPiece();
             state.player.currentPiece = (currentPiece != null) ? currentPiece.toDTO() : null;
             Tetromino nextPiece = board.getNextTetromino();
             state.player.nextPiece = (nextPiece != null) ? nextPiece.toDTO() : null;
             state.ack = lastReceivedAck + 1;
 
-            // Update lastSentAck with the new ACK
-            lastSentAck = state.ack;
-
             String json = new Gson().toJson(state);
-            Main.client.send("game_state:" + json);
-
-            // Update last sent health
-            lastSentHealth = currentHealth;
+            Main.client.send(Messages.GAME_STATE + Messages.SEPARATOR + json);
         }
     }
 
@@ -154,221 +191,119 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     @Override
     public void render(float delta) {
+        updateSkills(delta);
         checkEndGame();
         player.update(delta);
         sendGameState(delta);
-        // Clear the screen
-        Gdx.gl.glClearColor((float) 120/ 255, (float) 193 / 255, (float) 194 /255, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        clearScreen();
         stage.act(Gdx.graphics.getDeltaTime());
-        stage.draw();
 
-        //Draw background
+        drawBoards();
+        drawNextPiecePreviews();
+        drawHealthBarAndUI(delta);
+        stage.draw();
+    }
+
+    private void clearScreen() {
+        Gdx.gl.glClearColor(AppColors.BACKGROUND.r, AppColors.BACKGROUND.g, AppColors.BACKGROUND.b, AppColors.BACKGROUND.a);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+    }
+
+    private void drawBoards() {
+        // Draw black background areas for boards
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 1);
         shapeRenderer.rect(startPos, SIZE, SIZE * COLS, SIZE * ROWS);
         shapeRenderer.rect(startPos + COLS * SIZE + spaceBetween2Boards, SIZE, SIZE * COLS, SIZE * ROWS);
         shapeRenderer.end();
 
-        //Draw boards
+        // Draw game boards
         batch.begin();
         player.drawBoard(batch, startPos, SIZE);
-        opponentBoard.draw(batch,startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
+        opponentBoard.draw(batch, startPos + COLS * SIZE + spaceBetween2Boards, SIZE);
         batch.end();
 
-        // Draw borders
+        // Draw white borders
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        // Set border color
-        shapeRenderer.setColor(1, 1, 1, 1); // white border
+        shapeRenderer.setColor(1, 1, 1, 1);
+        shapeRenderer.rect(startPos, SIZE, COLS * SIZE, ROWS * SIZE);
+        shapeRenderer.rect(startPos + COLS * SIZE + spaceBetween2Boards, SIZE, COLS * SIZE, ROWS * SIZE);
+        shapeRenderer.end();
+    }
 
-        // Draw left board border
-        shapeRenderer.rect(
-            startPos,                       // x
-            SIZE,                       // y
-            COLS * SIZE,                // width
-            ROWS * SIZE                 // height
-        );
+    private void drawNextPiecePreviews() {
+        drawPreview(player.getNextTetromino(), leftNextPieceLabel, true);
+        drawPreview(opponentBoard.getNextTetromino(), rightNextPieceLabel, false);
+    }
 
-        // Draw right board border
-        shapeRenderer.rect(
-            startPos + COLS * SIZE + spaceBetween2Boards,   // x (space between boards = SIZE)
-            SIZE,                        // y
-            COLS * SIZE,                 // width
-            ROWS * SIZE                  // height
-        );
+    private void drawPreview(Tetromino piece, Label label, boolean isLeft) {
+        int previewXPos = isLeft ?
+            (int) ((COLS * SIZE) / 2 - 0.5f * SIZE) :
+            (int) ((COLS * SIZE * 3) / 2 + 5.5f * SIZE);
+        int previewYPos = ROWS * SIZE + 3 * SIZE;
+        int previewWidth = SIZE * 6;
+        int previewHeight = SIZE * 5;
 
+        label.setPosition(previewXPos, previewYPos + previewHeight - SIZE);
+        stage.addActor(label);
+
+        // Draw border
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1, 1, 1, 1);
+        shapeRenderer.rect(previewXPos - previewWidth / 4f, previewYPos - previewHeight / 4f, previewWidth + 0.5f, previewHeight + 0.5f);
         shapeRenderer.end();
 
-
-        // Draw Left Preview Tetromino
-        Tetromino board1NextPiece = player.getNextTetromino();
-        Tetromino board2NextPiece = opponentBoard.getNextTetromino();
-
-        int leftPreviewXPos = (int) ((float) (COLS * SIZE) / 2 - 0.5f * SIZE);
-        int leftPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
-        int leftPreviewWidth = SIZE * 6;
-        int leftPreviewHeight = SIZE * 5;
-
-        //Left Next Piece label
-        leftNextPieceLabel.setPosition(leftPreviewXPos, leftPreviewYPos + leftPreviewHeight - SIZE);
-        stage.addActor(leftNextPieceLabel);
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        // Draw right preview's border
-        shapeRenderer.setColor(1, 1, 1, 1); // white border
-        shapeRenderer.rect(leftPreviewXPos - (float) leftPreviewWidth / 4, leftPreviewYPos - (float) leftPreviewHeight / 4, leftPreviewWidth + 0.5f, leftPreviewHeight + 0.5f);
-        shapeRenderer.end();
-
-        //Draw left preview's background
+        // Draw background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 1);
-        shapeRenderer.rect(leftPreviewXPos - (float) leftPreviewWidth / 4, leftPreviewYPos - (float) leftPreviewHeight / 4, leftPreviewWidth, leftPreviewHeight);
+        shapeRenderer.rect(previewXPos - previewWidth / 4f, previewYPos - previewHeight / 4f, previewWidth, previewHeight);
         shapeRenderer.end();
 
-        if (board1NextPiece != null) {
-            // Draw the next tetromino
+        if (piece != null) {
             batch.begin();
-            board1NextPiece.draw(batch, leftPreviewXPos, leftPreviewYPos, ROWS);
+            piece.draw(batch, previewXPos, previewYPos, ROWS);
             batch.end();
         }
+    }
 
-        // Draw Right Preview Tetromino
-        int rightPreviewXPos = (int) ((float) (COLS * SIZE * 3) / 2 + 5.5f * SIZE);
-        int rightPreviewYPos = ROWS * SIZE + 3 * SIZE; // Above the board
-        int rightPreviewWidth = SIZE * 6;
-        int rightPreviewHeight = SIZE * 5;
+    private void drawHealthBarAndUI(float delta) {
+        int maxHeight = Math.max(
+            ROWS * SIZE + 3 * SIZE + SIZE * 5 + SIZE,
+            ROWS * SIZE + 3 * SIZE + SIZE * 5 + SIZE
+        );
 
-        // Right next piece label
-        rightNextPieceLabel.setPosition(rightPreviewXPos, leftPreviewYPos + leftPreviewHeight - SIZE);
-        stage.addActor(rightNextPieceLabel);
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        // Draw right preview's  border
-        shapeRenderer.setColor(1, 1, 1, 1); // white border
-        shapeRenderer.rect(rightPreviewXPos - (float) rightPreviewWidth /4, rightPreviewYPos - (float) rightPreviewHeight / 4, rightPreviewWidth + 0.5f, rightPreviewHeight + 0.5f);
-        shapeRenderer.end();
-
-        //Draw right preview's background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 1);
-        shapeRenderer.rect(rightPreviewXPos - (float) rightPreviewWidth / 4, rightPreviewYPos - (float) rightPreviewHeight / 4, rightPreviewWidth, rightPreviewHeight);
-        shapeRenderer.end();
-
-        if (board2NextPiece != null) {
-            // Draw the next tetromino
-            batch.begin();
-            board2NextPiece.draw(batch, rightPreviewXPos, rightPreviewYPos, ROWS);
-            batch.end();
-
-            if (Gdx.app != null) {
-                //Gdx.app.log("GameScreen", "nextPiece (board 2): " + board2NextPiece.getType());
-            }
-        }
-
-        //Draw health bar
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        int maxHeight = Math.max(leftPreviewYPos + leftPreviewHeight + SIZE,
-            rightPreviewYPos + rightPreviewHeight + SIZE);
         healthBar.draw(shapeRenderer, startPos, maxHeight);
         shapeRenderer.end();
 
-        //Draw leave room button
-        leaveRoomBtn.setPosition( startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
+        leaveRoomBtn.setPosition(startPos + healthBar.getWidth() + 0.5f * SIZE, maxHeight);
         stage.addActor(leaveRoomBtn);
 
-        // Skill Btns
+        // Draw skill buttons if available
+        if (skills != null && !skills.isEmpty()) {
+            float buttonX = startPos + healthBar.getWidth() + 0.5f * SIZE;
+            float buttonY = maxHeight - 60; // start a bit lower than health bar
+            float buttonSpacing = 50;
 
-        // extraPointBtn
-        extraPointBtn.setSize(60, 30);
-
-        extraPointBtn.setPosition(
-            leftPreviewXPos + leftPreviewWidth - SIZE,
-            leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() / 2
-        );
-        stage.addActor(extraPointBtn);
-
-        // Skill duration
-        if (activeExtraPointSkill != null) {
-            activeExtraPointSkill.update(delta);
-            if (activeExtraPointSkill.isActive()) {
-                extraPointBtn.setDisabled(true);
-                int secondsLeft = (int) Math.ceil(activeExtraPointSkill.getCurrentCooldown());
-                extraPointBtn.setText("X2 (" + secondsLeft + ")");
-            } else if (!activeExtraPointSkill.canActivate()) {
-                extraPointBtn.setDisabled(true);
-                int secondsLeft = (int) Math.ceil(activeExtraPointSkill.getCurrentCooldown());
-                extraPointBtn.setText("X (" + secondsLeft + ")");
-            } else {
-                extraPointBtn.setDisabled(false);
-                extraPointBtn.setText("X2");
-            }
-        }
-
-
-        // Lock opponent Skill Button
-
-        lockOpponentBtn.setSize(190, 30);
-
-        lockOpponentBtn.setPosition(
-            leftPreviewXPos + leftPreviewWidth - SIZE,
-            leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() - lockOpponentBtn.getHeight()
-        );
-        stage.addActor(lockOpponentBtn);
-
-        // Skill duration
-        if (activeLockOpponentSkill != null) {
-            activeLockOpponentSkill.update(delta);
-            if (activeLockOpponentSkill.isActive()) // Skill is activating
-            {
-                lockOpponentBtn.setDisabled(true);
-                lockOpponentBtn.setText("Lock Opponent is active");
-            }
-            else if (!activeLockOpponentSkill.canActivate()) // Skill can't be activated
-            {
-                lockOpponentBtn.setDisabled(true);
-                int secondsLeft = (int) Math.ceil(activeLockOpponentSkill.getCurrentCooldown());
-                lockOpponentBtn.setText("Lock Opponent (" + secondsLeft + ")");
-            }
-            else // Skill can be activated
-            {
-                lockOpponentBtn.setDisabled(false);
-                lockOpponentBtn.setText("Lock Opponent");
+            int index = 0;
+            for (TextButton btn : skills.keySet()) {
+                btn.setSize(150, 40);
+                btn.setPosition(buttonX, buttonY - index * (btn.getHeight() + buttonSpacing));
+                if (btn.getStage() == null) {
+                    stage.addActor(btn); // avoid re-adding
+                }
+                index++;
             }
         }
     }
 
-    private void drawPreviewTetromino(Tetromino piece, boolean isLeft) {
-        int previewX = isLeft
-            ? (int) ((COLS * SIZE) / 2 - 0.5f * SIZE)
-            : (int) ((COLS * SIZE * 3) / 2 + 5.5f * SIZE);
-        int previewY = ROWS * SIZE + SIZE * 3;
-        int width = SIZE * 6;
-        int height = SIZE * 5;
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 1);
-        shapeRenderer.rect(previewX - width / 4f, previewY - height / 4f, width, height);
-        shapeRenderer.end();
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(1, 1, 1, 1);
-        shapeRenderer.rect(previewX - width / 4f, previewY - height / 4f, width + 0.5f, height + 0.5f);
-        shapeRenderer.end();
-
-        batch.begin();
-        if (piece != null) piece.draw(batch, previewX, previewY, ROWS);
-        batch.end();
-
-        Label label = isLeft ? leftNextPieceLabel : rightNextPieceLabel;
-        label.setPosition(previewX, previewY + height - SIZE);
-        if (!label.hasParent()) stage.addActor(label);
-    }
 
     @Override
     public void HandleMessage(String msg) {
-        if (msg.startsWith("game_state:")) {
-            String json = msg.substring("game_state:".length());
+        String[] parts = msg.split(Messages.SEPARATOR);
+        if (parts[0].equals(Messages.GAME_STATE)) {
+            String json = msg.substring(Messages.GAME_STATE.length() + Messages.SEPARATOR.length());
             GameStateDTO dto = new Gson().fromJson(json, GameStateDTO.class);
             if (!dto.roomId.equals(this.roomId) || dto.ack <= lastReceivedAck) return;
             lastReceivedAck = dto.ack;
@@ -380,21 +315,56 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             tetrominoDTO = dto.player.nextPiece;
             opponentBoard.setNextRunningPiece(tetrominoDTO != null ? Tetromino.fromDTO(tetrominoDTO) : null);
 
-            float opponentPivot = dto.player.health;
-            healthBar.setPivot(100 - opponentPivot);
-        } else if (msg.startsWith("piece:")) {
-            String json = msg.substring("piece:".length());
+            if (isOwner) {
+                float opponentDamage = dto.player.health;
+                healthBar.setPivot(healthBar.getPivot() - opponentDamage);
+            } else {
+                if (healthBar.getLastScore() != 0f) return;
+                float opponentPivot = dto.player.health;
+                healthBar.setPivot(100 - opponentPivot);
+            }
+
+        } else if (parts[0].equals(Messages.PLAYER_LEFT)) {
+            Main.client.send(Messages.LEAVE);
+            showPopup("Opponent has left the game!", "LEAVE", () -> main.setScreen(new MatchScreen(main)));
+
+        } else if (parts[0].equals(Messages.PIECE)) {
+            String json = msg.substring(Messages.PIECE.length() + Messages.SEPARATOR.length());
             Tetromino piece = Tetromino.fromDTO(new Gson().fromJson(json, TetrominoDTO.class));
             player.getBoard().handleSpawn(piece);
-        } else if (msg.startsWith("next_piece:")) {
-            String json = msg.substring("next_piece:".length());
+
+        } else if (parts[0].equals(Messages.NEXT_PIECE)) {
+            String json = msg.substring(Messages.NEXT_PIECE.length() + Messages.SEPARATOR.length());
             Tetromino piece = Tetromino.fromDTO(new Gson().fromJson(json, TetrominoDTO.class));
             player.getBoard().setNextRunningPiece(piece);
-        } else if (msg.startsWith("lock_player")) {
+
+        } else if (parts[0].equals(Messages.LOCK_PLAYER)) {
             player.setIsBeingLocked(true);
-        } else if (msg.startsWith("unlock_player")) {
+
+        } else if (parts[0].equals(Messages.UNLOCK_PLAYER)) {
             player.setIsBeingLocked(false);
         }
+    }
+
+
+
+    private void showPopup(String message) {
+        showPopup(message, "OK", null);
+    }
+
+    private void showPopup(String message, String action) {
+        showPopup(message, action, null);
+    }
+
+    private void showPopup(String message, Runnable onOk) {
+        showPopup(message, "OK", onOk);
+    }
+
+    private void showPopup(String message, String action, Runnable onOk) {
+        if (dialog != null)
+            dialog.hide();
+        dialog = UIFactory.createDialog("Notice", message, action, onOk);
+        dialog.show(stage);
     }
 
     @Override public boolean keyDown(int keycode) {

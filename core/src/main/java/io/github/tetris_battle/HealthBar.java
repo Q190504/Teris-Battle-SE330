@@ -7,6 +7,7 @@ public class HealthBar {
     private float pivot = 50f; // 50% is neutral
     private int width = 300;   // Default width
     private float borderThickness = 4f;
+    private float lastScore = 0f;
 
     public void setWidth(int width) {
         this.width = width;
@@ -15,6 +16,9 @@ public class HealthBar {
     public float getPivot() {
         return pivot;
     }
+
+    public float getLastScore() { return lastScore; }
+    public void setLastScore(float lastScore) {this.lastScore = lastScore;}
 
     public int getWidth() { return width; }
 
@@ -29,6 +33,7 @@ public class HealthBar {
 
     public void pushRight(float percent) {
         pivot += percent;
+        lastScore += percent;
         clampPivot();
     }
 

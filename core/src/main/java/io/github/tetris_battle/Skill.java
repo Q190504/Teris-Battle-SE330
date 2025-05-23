@@ -45,5 +45,9 @@ public abstract class Skill {
     {
         this.effectingTime = effectingTime;
     }
+
+    public String getName() {
+        return "name";
+    }
 }
 

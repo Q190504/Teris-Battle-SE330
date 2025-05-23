@@ -11,6 +11,15 @@ public class ExtraPointsSkill extends Skill {
     }
 
     @Override
+    public String getName() {
+        return "Extra Point";
+    }
+
+    public static String getStaticName() {
+        return "Extra Point";
+    }
+
+    @Override
     public void activate() {
         if (canActivate()) {
             active = true;

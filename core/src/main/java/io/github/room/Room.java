@@ -2,6 +2,7 @@ package io.github.room;
 import io.github.network.server.PlayerConnection;
 import io.github.tetris_battle.Tetromino;
 import io.github.tetris_battle.TetrominoSpawner;
+import io.github.ui.Messages;
 
 import java.util.*;
 
@@ -70,7 +71,8 @@ public class Room {
         }
         pending.put(player.toString(), player);
         player.currentRoom = this;
-        owner.send("join_request:" + player.name + ":" + player);
+        player.send(Messages.JOIN_REQUEST + Messages.SEPARATOR + roomId);
+        owner.send(Messages.JOIN_REQUEST + Messages.SEPARATOR + player.name + Messages.SEPARATOR + player);
     }
 
     public void approvePlayer(String playerKey) {
@@ -83,10 +85,10 @@ public class Room {
         if (player != null) {
             approved.put(playerKey, player);
             player.isApproved = true;
-            player.send("approved:" + roomId);
+            player.send(Messages.APPROVED + Messages.SEPARATOR + roomId + Messages.SEPARATOR + owner.name);
 
             for (PlayerConnection rejectedPlayer : pending.values()) {
-                rejectedPlayer.send("rejected:" + roomId);
+                rejectedPlayer.send(Messages.REJECTED + Messages.SEPARATOR + roomId);
                 rejectedPlayer.currentRoom = null;
             }
             pending.clear();
@@ -96,7 +98,20 @@ public class Room {
     public void removePlayer(PlayerConnection player) {
         pending.remove(player.toString());
         approved.remove(player.toString());
-        player.send("left_room");
+        broadcastExcept(player, Messages.PLAYER_LEFT + Messages.SEPARATOR + player.name +
+            Messages.SEPARATOR + player);
+        if (player == owner) {
+            // If owner leaves, close room and notify others
+            for (PlayerConnection p : approved.values()) {
+                p.send(Messages.ROOM_CLOSED);
+                p.currentRoom = null;
+            }
+            for (PlayerConnection p : pending.values()) {
+                p.send(Messages.ROOM_CLOSED);
+                p.currentRoom = null;
+            }
+            RoomManager.getInstance().removeRoom(roomId);
+        }
         player.currentRoom = null;
     }
 }
