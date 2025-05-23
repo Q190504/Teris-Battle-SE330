@@ -5,7 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 public class UIFactory {
-    private static final Skin skin = new Skin(Gdx.files.internal("assets/quantum/quantum-horizon-ui.json"));
+    private static final Skin skin = new Skin(Gdx.files.internal("quantum/quantum-horizon-ui.json"));
 
     public static Label createLabel(String text) {
         return new Label(text, skin);

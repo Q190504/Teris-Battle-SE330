@@ -1,3 +1,10 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'eclipse'
+  id 'idea'
+}
+
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 eclipse.project.name = appName + '-core'
 
@@ -9,3 +16,38 @@ dependencies {
 
   }
 }
+
+// Set Java compatibility
+java {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+// Set the main class for the server
+application {
+  mainClass = 'io.github.server.NetworkManager'
+}
+
+// JAR configuration (fat jar)
+jar {
+
+  archiveFileName.set("TetrisBattle-server-${project.version}.jar")
+  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+  dependsOn configurations.runtimeClasspath
+  from {
+    configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  manifest {
+    attributes 'Main-Class': application.mainClass.get()
+  }
+
+  if (project.hasProperty("jarOutDir")) {
+    jar.destinationDirectory.set(rootProject.file(jarOutDir))
+  }
+
+  doLast {
+    file(archiveFile).setExecutable(true, false)
+  }
+}
+
