@@ -1,7 +1,6 @@
 package io.github.tetris_battle;
 
 public class ExtraPointsSkill extends Skill {
-    private float timer = 0f;
     private final ScoreManager scoreManager;
 
     public ExtraPointsSkill(ScoreManager scoreManager, float cooldownTime) {
@@ -19,11 +18,15 @@ public class ExtraPointsSkill extends Skill {
         return "Extra Point";
     }
 
+    public String getInstruction() {
+        return "Score X2";
+    }
+
     @Override
     public void activate() {
         if (canActivate()) {
             active = true;
-            timer = getEffectingTime();
+            activeTimer = getEffectingTime();
             scoreManager.setDoubleDamage(true);
         }
     }
@@ -32,8 +35,8 @@ public class ExtraPointsSkill extends Skill {
     public void update(float delta) {
         super.update(delta);
         if (active) {
-            timer -= delta;
-            if (timer <= 0) {
+            activeTimer -= delta;
+            if (activeTimer <= 0) {
                 active = false;
                 scoreManager.setDoubleDamage(false);
                 startCooldown();

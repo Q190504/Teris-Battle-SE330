@@ -5,6 +5,7 @@ public abstract class Skill {
     private final float cooldownTime;
     private float currentCooldown = 0f;
     private float effectingTime;
+    protected float activeTimer = 0f; // Timer để đếm thời gian skill đang active
 
     public Skill(float cooldownTime) {
         this.cooldownTime = cooldownTime;
@@ -48,6 +49,13 @@ public abstract class Skill {
 
     public String getName() {
         return "name";
+    }
+    public String getInstruction() {
+        return "name";
+    }
+
+    public float getRemainingActiveTime() {
+        return active ? activeTimer : 0f;
     }
 }
 
