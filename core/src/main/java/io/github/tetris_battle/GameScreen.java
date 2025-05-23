@@ -37,6 +37,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     private ExtraPointsSkill activeExtraPointSkill;
     private LockOpponentSkill activeLockOpponentSkill;
+    private SpeedBoostSkill activeSpeedBoostSkill;
 
     private Label countdownLabel;
 
@@ -67,6 +68,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         leaveRoomBtn = new TextButton("LEAVE ROOM", skin);
         extraPointBtn = new TextButton("X2", skin);
         lockOpponentBtn = new TextButton("Lock Opponent", skin);
+        speedBoostBtn = new TextButton("Speed Boost", skin);
 
         extraPointBtn.addListener(new ClickListener() {
             @Override
@@ -85,6 +87,16 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
                     return;
                 activeLockOpponentSkill = new LockOpponentSkill(player2, 10f);
                 player1.useSkill(activeLockOpponentSkill);
+            }
+        });
+
+        speedBoostBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (speedBoostBtn.isDisabled())
+                    return;
+                activeSpeedBoostSkill = new SpeedBoostSkill(player1, 30f); // 30s cooldown
+                player1.useSkill(activeSpeedBoostSkill);
             }
         });
     }
@@ -281,7 +293,40 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
                 lockOpponentBtn.setText("Lock Opponent");
             }
         }
+
+        
+        //speedBoostBtn
+        speedBoostBtn.setSize(190, 30);
+
+        speedBoostBtn.setPosition(
+            leftPreviewXPos + leftPreviewWidth - SIZE,
+            leftPreviewYPos + leftPreviewHeight / 2 - extraPointBtn.getHeight() - lockOpponentBtn.getHeight() - speedBoostBtn.getHeight()
+        );
+        stage.addActor(speedBoostBtn);
+
+        // Skill duration
+if (activeSpeedBoostSkill != null) {
+    activeSpeedBoostSkill.update(delta);
+    if (activeSpeedBoostSkill.isActive()) // Skill is activating
+    {
+        speedBoostBtn.setDisabled(true);
+        int secondsLeft = (int) Math.ceil(activeSpeedBoostSkill.getRemainingActiveTime());
+        speedBoostBtn.setText("Press SPACE (" + secondsLeft + "s)");
     }
+    else if (!activeSpeedBoostSkill.canActivate()) // Skill can't be activated (on cooldown)
+    {
+        speedBoostBtn.setDisabled(true);
+        int secondsLeft = (int) Math.ceil(activeSpeedBoostSkill.getCurrentCooldown());
+        speedBoostBtn.setText("Speed Boost (" + secondsLeft + "s)");
+    }
+    else // Skill can be activated
+    {
+        speedBoostBtn.setDisabled(false);
+        speedBoostBtn.setText("Speed Boost");
+    }
+}
+    }
+
 
     @Override
     public boolean keyDown(int keycode) {
@@ -289,6 +334,12 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
         else if (keycode == Input.Keys.D && !player1.isBeingLocked()) player1.movePiece(1);
         else if (keycode == Input.Keys.S) player1.dropPiece();
         else if (keycode == Input.Keys.W) player1.rotatePiece();
+        else if (keycode == Input.Keys.SPACE) {
+            // Use speed boost if active
+            if (activeSpeedBoostSkill != null && activeSpeedBoostSkill.canUseSpeedBoost()) {
+                activeSpeedBoostSkill.performSpeedDrop();
+            }
+        }
 
         if (keycode == Input.Keys.LEFT && !player2.isBeingLocked()) player2.movePiece(-1);
         else if (keycode == Input.Keys.RIGHT && !player2.isBeingLocked()) player2.movePiece(1);

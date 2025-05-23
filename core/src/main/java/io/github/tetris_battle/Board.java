@@ -247,4 +247,28 @@ public class Board {
             currentRunningPiece.draw(batch, posX, posY, ROWS);
         }
     }
+
+    public void dropPieceToBottom() {
+        if (currentRunningPiece == null || isFull) {
+            return;
+        }
+        
+        // Create a clone to test collision
+        Tetromino testPiece = currentRunningPiece.clonePiece();
+        
+        // Keep dropping the test piece until collision is detected
+        while (true) {
+            testPiece.drop(); // Move test piece down one step
+            if (CollisionChecker.getInstance().checkCollision(testPiece, this)) {
+                // Collision detected, stop here
+                break;
+            }
+            // No collision, update the actual piece position
+            currentRunningPiece.drop();
+        }
+        
+        // Place the piece at its final position
+        placePiece(currentRunningPiece);
+    }
+    
 }
