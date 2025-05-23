@@ -65,6 +65,10 @@ jar {
   manifest {
     attributes 'Main-Class': project.mainClassName
   }
+  if (project.hasProperty("jarOutDir")) {
+    jar.destinationDirectory.set(rootProject.file(jarOutDir))
+  }
+
 // this last step may help on some OSes that need extra instruction to make runnable JARs.
   doLast {
     file(archiveFile).setExecutable(true, false)
