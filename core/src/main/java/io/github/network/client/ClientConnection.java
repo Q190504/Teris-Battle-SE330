@@ -25,9 +25,15 @@ public class ClientConnection implements Runnable {
     }
 
     public void send(String msg) {
-        System.out.println("Client sent: " + msg);
         out.println(msg);
+        out.flush();
+        if (out.checkError()) {
+            System.err.println("Send failed: socket might be closed.");
+        } else {
+            System.out.println("Client sent: " + msg);
+        }
     }
+
 
     @Override
     public void run() {
