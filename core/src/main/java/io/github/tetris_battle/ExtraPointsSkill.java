@@ -6,7 +6,7 @@ public class ExtraPointsSkill extends Skill {
     public ExtraPointsSkill(ScoreManager scoreManager, float cooldownTime) {
         super(cooldownTime);
         this.scoreManager = scoreManager;
-        setEffectingTime(10f); // 10 seconds
+        setEffectingTime(SkillConfigs.EXTRA_POINT_ACTIVE); // 10 seconds
     }
 
     @Override
@@ -16,6 +16,10 @@ public class ExtraPointsSkill extends Skill {
 
     public static String getStaticName() {
         return "Extra Point";
+    }
+    public static String getStaticInstruction() {
+        return "Double point for " + SkillConfigs.EXTRA_POINT_ACTIVE + "s." +
+            "\nCooldown: " + SkillConfigs.EXTRA_POINT_CD + "s.";
     }
 
     public String getInstruction() {

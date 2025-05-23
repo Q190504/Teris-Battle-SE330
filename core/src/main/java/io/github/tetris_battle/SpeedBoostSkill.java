@@ -7,13 +7,13 @@ public class SpeedBoostSkill extends Skill {
     public SpeedBoostSkill(Player player, float cooldownTime) {
         super(cooldownTime);
         this.player = player;
-        setEffectingTime(5f); // 5 seconds duration
+        setEffectingTime(SkillConfigs.SPEED_BOOST_ACTIVE);
     }
 
     public SpeedBoostSkill(float cooldownTime) {
         super(cooldownTime);
         this.player = null;
-        setEffectingTime(5f); // 5 seconds duration
+        setEffectingTime(SkillConfigs.SPEED_BOOST_ACTIVE);
     }
 
     @Override
@@ -23,6 +23,10 @@ public class SpeedBoostSkill extends Skill {
 
     public static String getStaticName() {
         return "Boost Speed";
+    }
+    public static String getStaticInstruction() {
+        return "Allow immediate drop for " + SkillConfigs.SPEED_BOOST_ACTIVE + "s." +
+            "\nCooldown: " + SkillConfigs.SPEED_BOOST_CD + "s.";
     }
 
     public String getInstruction() {
