@@ -3,6 +3,7 @@ package io.github.client.ui;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 import io.github.client.ClientConnection;
+import io.github.logic.utils.AudioManager;
 import io.github.logic.utils.Messages;
 
 import java.io.IOException;
@@ -49,6 +50,10 @@ public class Main extends Game {
                 }
             }
         }, 3000, 3000);
+
+        //Menu music
+        AudioManager.getInstance().preloadMenuMusic();
+        AudioManager.getInstance().playMusic("menu_bg", true);
     }
 
     public void connectToServer() {
@@ -98,4 +103,6 @@ public class Main extends Game {
         if (client != null) client.close();
         super.dispose();
     }
+
+    
 }

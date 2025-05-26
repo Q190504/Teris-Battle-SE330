@@ -14,6 +14,7 @@ import io.github.logic.data.PlayerState;
 import io.github.logic.data.TetrominoDTO;
 import io.github.logic.tetris_battle.Player;
 import io.github.logic.utils.*;
+import io.github.logic.utils.AudioManager.AudioCategory;
 import io.github.logic.tetris_battle.board.Board;
 import io.github.logic.tetris_battle.board.Tetromino;
 import io.github.logic.tetris_battle.score.HealthBar;
@@ -147,6 +148,12 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 Main.client.send(Messages.LEAVE);
+
+                //Leave room and go back to match screen play menu background music
+                AudioManager.getInstance().stopMusic();
+                AudioManager.getInstance().preloadMenuMusic();
+                AudioManager.getInstance().playMusic("menu_bg", true);
+
                 main.setScreen(new MatchScreen(main));
             }
         });
@@ -438,7 +445,12 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     @Override public boolean mouseMoved(int screenX, int screenY) { return false; }
     @Override public boolean scrolled(float amountX, float amountY) { return false; }
     @Override public void resize(int width, int height) {}
-    @Override public void show() {}
+    @Override public void show() {
+        //Background music
+        AudioManager.getInstance().stopMusic();
+        AudioManager.getInstance().preloadGameMusic(); 
+        AudioManager.getInstance().playMusic("game_bg", true);
+    }
     @Override public void hide() {}
     @Override public void pause() {}
     @Override public void resume() {}
