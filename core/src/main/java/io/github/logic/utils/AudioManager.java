@@ -4,13 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
-import io.github.logic.utils.AudioSettings;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AudioManager {
+    public enum AudioType {
+        MUSIC,
+        SFX
+    }
+
     public enum AudioCategory {
         MENU_MUSIC,
         GAME_MUSIC,
@@ -19,35 +22,34 @@ public class AudioManager {
         SKILL_SFX
     }
 
-    public static class AudioConfig {
-        public float volume;
-        public boolean muted;
-
-        public AudioConfig(float volume, boolean muted) {
-            this.volume = volume;
-            this.muted = muted;
-        }
-    }
-
     private static AudioManager instance;
 
     private Map<String, Music> musicMap;
     private Map<String, Sound> soundMap;
     private Map<String, AudioCategory> musicCategoryMap;
     private Map<String, AudioCategory> soundCategoryMap;
-    private EnumMap<AudioCategory, AudioConfig> configMap;
 
     private Music currentMusic;
     private String currentMusicKey;
+    
+    // Separate volume controls
+    private float masterVolume = 1.0f;
+    private float musicVolume = 1.0f;
+    private float sfxVolume = 1.0f;
+    
+    // Separate mute controls
+    private boolean masterMuted = false;
+    private boolean musicMuted = false;
+    private boolean sfxMuted = false;
 
     private AudioManager() {
         musicMap = new HashMap<>();
         soundMap = new HashMap<>();
         musicCategoryMap = new HashMap<>();
         soundCategoryMap = new HashMap<>();
-
-        // Load config from separate file
-        configMap = AudioSettings.getDefaultConfig();
+        
+        // Load settings from AudioSettings
+        loadSettings();
     }
 
     public static AudioManager getInstance() {
@@ -55,6 +57,32 @@ public class AudioManager {
             instance = new AudioManager();
         }
         return instance;
+    }
+
+    private void loadSettings() {
+        AudioSettings settings = AudioSettings.getInstance();
+        
+        masterVolume = settings.getMasterVolume();
+        musicVolume = settings.getMusicVolume();
+        sfxVolume = settings.getSfxVolume();
+        
+        masterMuted = settings.isMasterMuted();
+        musicMuted = settings.isMusicMuted();
+        sfxMuted = settings.isSfxMuted();
+    }
+
+    public void saveSettings() {
+        AudioSettings settings = AudioSettings.getInstance();
+        
+        settings.setMasterVolume(masterVolume);
+        settings.setMusicVolume(musicVolume);
+        settings.setSfxVolume(sfxVolume);
+        
+        settings.setMasterMuted(masterMuted);
+        settings.setMusicMuted(musicMuted);
+        settings.setSfxMuted(sfxMuted);
+        
+        settings.saveSettings();
     }
 
     public void loadMusic(String key, String filePath, AudioCategory category) {
@@ -80,14 +108,13 @@ public class AudioManager {
     }
 
     public void playMusic(String key, boolean loop) {
+        if (masterMuted || musicMuted) return;
+        
         AudioCategory category = musicCategoryMap.get(key);
         if (category == null) {
             Gdx.app.error("AudioManager", "Music category not found for key: " + key);
             return;
         }
-
-        AudioConfig config = configMap.get(category);
-        if (config == null || config.muted) return;
 
         Music music = musicMap.get(key);
         if (music != null) {
@@ -95,7 +122,7 @@ public class AudioManager {
             currentMusic = music;
             currentMusicKey = key;
             music.setLooping(loop);
-            music.setVolume(config.volume);
+            music.setVolume(calculateMusicVolume(category));
             music.play();
         } else {
             Gdx.app.error("AudioManager", "Music key not found: " + key);
@@ -103,25 +130,63 @@ public class AudioManager {
     }
 
     public void playSound(String key) {
+        playSound(key, 1.0f);
+    }
+
+    public void playSound(String key, float volumeModifier) {
+        if (masterMuted || sfxMuted) return;
+        
         AudioCategory category = soundCategoryMap.get(key);
         if (category == null) {
             Gdx.app.error("AudioManager", "Sound category not found for key: " + key);
             return;
         }
 
-        AudioConfig config = configMap.get(category);
-        if (config == null || config.muted) return;
-
         Sound sound = soundMap.get(key);
         if (sound != null) {
-            sound.play(config.volume);
+            float finalVolume = calculateSfxVolume(category) * volumeModifier;
+            sound.play(finalVolume);
         } else {
             Gdx.app.error("AudioManager", "Sound key not found: " + key);
         }
     }
 
+    private float calculateMusicVolume(AudioCategory category) {
+        float categoryVolume = AudioSettings.getInstance().getCategoryVolume(category);
+        return masterVolume * musicVolume * categoryVolume;
+    }
+
+    private float calculateSfxVolume(AudioCategory category) {
+        float categoryVolume = AudioSettings.getInstance().getCategoryVolume(category);
+        return masterVolume * sfxVolume * categoryVolume;
+    }
+
+    public void updateCurrentMusicVolume() {
+        if (currentMusic != null && currentMusicKey != null) {
+            AudioCategory category = musicCategoryMap.get(currentMusicKey);
+            if (category != null) {
+                float newVolume = (masterMuted || musicMuted) ? 0 : calculateMusicVolume(category);
+                currentMusic.setVolume(newVolume);
+            }
+        }
+    }
+
     public void stopMusic() {
-        if (currentMusic != null) currentMusic.stop();
+        if (currentMusic != null) {
+            currentMusic.stop();
+            currentMusic = null;
+            currentMusicKey = null;
+        }
+    }
+
+    public void pauseMusic() {
+        if (currentMusic != null) currentMusic.pause();
+    }
+
+    public void resumeMusic() {
+        if (currentMusic != null && !masterMuted && !musicMuted) {
+            currentMusic.play();
+        }
     }
 
     public void stopAllSounds() {
@@ -130,26 +195,122 @@ public class AudioManager {
         }
     }
 
-    public void setCategoryMuted(AudioCategory category, boolean muted) {
-        AudioConfig config = configMap.get(category);
-        if (config != null) config.muted = muted;
+    // Master volume controls
+    public void setMasterVolume(float volume) {
+        this.masterVolume = Math.max(0f, Math.min(1f, volume));
+        updateCurrentMusicVolume();
+        saveSettings();
     }
 
+    public float getMasterVolume() {
+        return masterVolume;
+    }
+
+    public void setMasterMuted(boolean muted) {
+        this.masterMuted = muted;
+        updateCurrentMusicVolume();
+        saveSettings();
+    }
+
+    public boolean isMasterMuted() {
+        return masterMuted;
+    }
+
+    // Music volume controls
+    public void setMusicVolume(float volume) {
+        this.musicVolume = Math.max(0f, Math.min(1f, volume));
+        updateCurrentMusicVolume();
+        saveSettings();
+    }
+
+    public float getMusicVolume() {
+        return musicVolume;
+    }
+
+    public void setMusicMuted(boolean muted) {
+        this.musicMuted = muted;
+        updateCurrentMusicVolume();
+        saveSettings();
+    }
+
+    public boolean isMusicMuted() {
+        return musicMuted;
+    }
+
+    // SFX volume controls
+    public void setSfxVolume(float volume) {
+        this.sfxVolume = Math.max(0f, Math.min(1f, volume));
+        saveSettings();
+    }
+
+    public float getSfxVolume() {
+        return sfxVolume;
+    }
+
+    public void setSfxMuted(boolean muted) {
+        this.sfxMuted = muted;
+        saveSettings();
+    }
+
+    public boolean isSfxMuted() {
+        return sfxMuted;
+    }
+
+    // Category-specific controls
     public void setCategoryVolume(AudioCategory category, float volume) {
-        AudioConfig config = configMap.get(category);
-        if (config != null) config.volume = Math.max(0f, Math.min(1f, volume));
+        AudioSettings.getInstance().setCategoryVolume(category, volume);
+        updateCurrentMusicVolume();
+        saveSettings();
     }
 
-    public boolean isMuted(AudioCategory category) {
-        AudioConfig config = configMap.get(category);
-        return config != null && config.muted;
+    public float getCategoryVolume(AudioCategory category) {
+        return AudioSettings.getInstance().getCategoryVolume(category);
     }
 
-    public float getVolume(AudioCategory category) {
-        AudioConfig config = configMap.get(category);
-        return config != null ? config.volume : 1f;
+    public void setCategoryMuted(AudioCategory category, boolean muted) {
+        AudioSettings.getInstance().setCategoryMuted(category, muted);
+        updateCurrentMusicVolume();
+        saveSettings();
     }
 
+    public boolean isCategoryMuted(AudioCategory category) {
+        return AudioSettings.getInstance().isCategoryMuted(category);
+    }
+
+    // Utility methods for quick sound effects
+    public void playButtonClick() {
+        playSound("button_click");
+    }
+
+    public void playNotification() {
+        playSound("notification");
+    }
+
+    public void playWarning() {
+        playSound("warning");
+    }
+
+    public void playPieceMove() {
+        playSound("piece_move");
+    }
+
+    public void playPieceRotate() {
+        playSound("piece_rotate");
+    }
+
+    public void playPieceDrop() {
+        playSound("piece_drop");
+    }
+
+    public void playLineClear() {
+        playSound("line_clear");
+    }
+
+    public void playSkillActivate() {
+        playSound("skill_activate");
+    }
+
+    // Preload methods
     public void preloadMenuMusic() {
         loadMusic("menu_bg", "audio/menu_background.mp3", AudioCategory.MENU_MUSIC);
     }
@@ -185,13 +346,30 @@ public class AudioManager {
         preloadUiSfx();
     }
 
+    // Check if audio is effectively muted
+    public boolean isEffectivelyMuted(AudioType type) {
+        if (masterMuted) return true;
+        
+        switch (type) {
+            case MUSIC:
+                return musicMuted;
+            case SFX:
+                return sfxMuted;
+            default:
+                return false;
+        }
+    }
+
     public void dispose() {
+        saveSettings();
+        
         for (Music music : musicMap.values()) {
             music.dispose();
         }
         for (Sound sound : soundMap.values()) {
             sound.dispose();
         }
+        
         musicMap.clear();
         soundMap.clear();
         musicCategoryMap.clear();
