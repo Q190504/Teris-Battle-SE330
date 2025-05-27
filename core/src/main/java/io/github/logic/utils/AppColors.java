@@ -21,6 +21,12 @@ public class AppColors {
     // Yellow with high contrast and vibrancy for single-player label
     public static final Color SINGLE_LABEL = new Color(1f, 1f, 0.2f, 1f); // #FFFF33
 
+    // Green: Win label
+    public static final Color WIN_TITLE = new Color(0.3f, 1f, 0.3f, 1f); // #4DFF4D
+
+    // Red: Lose label
+    public static final Color LOSE_TITLE = new Color(1f, 0.4f, 0.4f, 1f); // #FF6666
+
     // Button text: very light cyan for soft contrast on dark buttons
     public static final Color BUTTON_TEXT = new Color(0.9f, 1f, 1f, 1f); // #E6FFFF
 

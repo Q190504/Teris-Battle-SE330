@@ -33,4 +33,6 @@ public class Messages {
     public static final String GAME_STATE = "game_state";
     public static final String LOCK_PLAYER = "lock_player";
     public static final String UNLOCK_PLAYER = "unlock_player";
+
+    public static final String OPPONENT_WIN = "opponent_win";
 }

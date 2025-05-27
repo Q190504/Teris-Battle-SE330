@@ -121,7 +121,8 @@ public class Tetromino {
     public Tetromino clonePiece() {
         Tetromino clone = new Tetromino(type);
         clone.shape = convertToArray(shape.toArray(int[].class));
-        clone.initialShape = shape;
+        //clone.initialShape = shape;
+        clone.initialShape = convertToArray(initialShape.toArray(int[].class));
         clone.row = this.row;
         clone.col = this.col;
         clone.rotationState = this.rotationState;

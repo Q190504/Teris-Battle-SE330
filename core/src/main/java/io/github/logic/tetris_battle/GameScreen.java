@@ -8,6 +8,8 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.TimeUtils;
+import io.github.client.ui.EndGameScreen;
 import io.github.logic.tetris_battle.board.Tetromino;
 import io.github.logic.tetris_battle.board.TetrominoSpawner;
 import io.github.logic.tetris_battle.score.HealthBar;
@@ -19,11 +21,17 @@ import io.github.client.ui.Main;
 import io.github.logic.utils.Side;
 
 public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
+    private final Main main;
+
     private final int ROWS = 20, COLS = 10, SIZE = 30;
     private TetrominoSpawner spawner;
     private HealthBar healthBar;
     private Player player1;
     private Player player2;
+
+    private long startTime;
+    private long endTime;
+    private float durationSeconds;
 
     private final int startPos = SIZE * 3;
     private final int spaceBetween2Boards = SIZE * 2;
@@ -50,6 +58,7 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
     private Label countdownLabel;
 
     public GameScreen(Main main, TetrominoSpawner spawner, HealthBar healthBar) {
+        this.main = main;
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
         this.spawner = spawner;
@@ -111,6 +120,10 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
 
     private void checkEndGame() {
         if (player1.isFullBoard() || player2.isFullBoard() || healthBar.isEndGame()) {
+            endTime = TimeUtils.millis();
+            long durationMillis = endTime - startTime;
+            durationSeconds = durationMillis / 1000.0f;
+            main.setScreen(new EndGameScreen(main, false, durationSeconds));
             // Game Over logic (switch screen or show game over message)
             //Gdx.app.log("Event", "End Game");
         }
@@ -302,7 +315,6 @@ public class GameScreen implements Screen, InputProcessor, HandleMessageScreen {
             }
         }
 
-
         //speedBoostBtn
         speedBoostBtn.setSize(190, 30);
 
@@ -387,7 +399,9 @@ if (activeSpeedBoostSkill != null) {
     public void resize(int width, int height) {}
 
     @Override
-    public void show() {}
+    public void show() {
+        startTime = TimeUtils.millis();
+    }
 
     @Override
     public void hide() {}
