@@ -151,7 +151,6 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
                 //Leave room and go back to match screen play menu background music
                 AudioManager.getInstance().stopMusic();
-                AudioManager.getInstance().preloadMenuMusic();
                 AudioManager.getInstance().playMusic("menu_bg", true);
 
                 main.setScreen(new MatchScreen(main));
@@ -448,7 +447,6 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     @Override public void show() {
         //Background music
         AudioManager.getInstance().stopMusic();
-        AudioManager.getInstance().preloadGameMusic(); 
         AudioManager.getInstance().playMusic("game_bg", true);
     }
     @Override public void hide() {}

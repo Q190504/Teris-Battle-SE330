@@ -25,6 +25,7 @@ public class Main extends Game {
 
     @Override
     public void create() {
+        AudioManager.getInstance().preloadAllAudio();
         matchScreen = new MatchScreen(this);
         setScreen(matchScreen);
 
@@ -52,7 +53,6 @@ public class Main extends Game {
         }, 3000, 3000);
 
         //Menu music
-        AudioManager.getInstance().preloadMenuMusic();
         AudioManager.getInstance().playMusic("menu_bg", true);
     }
 
