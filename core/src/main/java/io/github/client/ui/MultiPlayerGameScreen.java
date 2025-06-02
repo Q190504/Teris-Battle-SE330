@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.google.gson.Gson;
 import io.github.logic.data.GameStateDTO;
 import io.github.logic.data.PlayerState;
@@ -39,6 +40,10 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     private Player player;
     private Board opponentBoard;
+
+    private long startTime;
+    private long endTime;
+    private float durationSeconds;
 
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
@@ -223,10 +228,12 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
     private void checkEndGame() {
         if (player.isFullBoard() || healthBar.isEndGame()) {
+            endTime = TimeUtils.millis();
+            long durationMillis = endTime - startTime;
+            durationSeconds = durationMillis / 1000.0f;
             Gdx.app.log("Event", "End Game");
-            //Left side: player
-            //Main.client.sent("end_game:win")
-            // Optionally: main.setScreen(new GameOverScreen(Main main, bool win/lose, long totaltime));
+            main.setScreen(new EndGameScreen(main, false, durationSeconds));
+            Main.client.send(Messages.OPPONENT_WIN + Messages.SEPARATOR + durationSeconds);
         }
     }
 
@@ -396,10 +403,15 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                     main.setScreen(new MatchScreen(main));
                 }
             });
+        } else if (parts[0].equals(Messages.OPPONENT_WIN)) {
+            if (parts.length > 1) {
+                float duration = Float.parseFloat(parts[1]);
+                Gdx.app.postRunnable(() -> {
+                    main.setScreen(new EndGameScreen(main, true, duration));
+                });
+            }
         }
     }
-
-
 
     private void showPopup(String message) {
         showPopup(message, "OK", null);
@@ -445,6 +457,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
     @Override public boolean scrolled(float amountX, float amountY) { return false; }
     @Override public void resize(int width, int height) {}
     @Override public void show() {
+        startTime = TimeUtils.millis();
+
         //Background music
         AudioManager.getInstance().stopMusic();
         AudioManager.getInstance().playMusic("game_bg", true);
