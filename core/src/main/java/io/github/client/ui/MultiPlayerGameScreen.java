@@ -15,7 +15,6 @@ import io.github.logic.data.PlayerState;
 import io.github.logic.data.TetrominoDTO;
 import io.github.logic.tetris_battle.Player;
 import io.github.logic.utils.*;
-import io.github.logic.utils.AudioManager.AudioCategory;
 import io.github.logic.tetris_battle.board.Board;
 import io.github.logic.tetris_battle.board.Tetromino;
 import io.github.logic.tetris_battle.score.HealthBar;
@@ -379,6 +378,11 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
         } else if (parts[0].equals(Messages.PLAYER_LEFT)) {
             Main.client.send(Messages.LEAVE);
+
+            //Leave room and go back to match screen play menu background music
+            AudioManager.getInstance().stopMusic();
+            AudioManager.getInstance().playMusic("menu_bg", true);
+
             showPopup("Opponent has left the game!", "LEAVE", () -> main.setScreen(new MatchScreen(main)));
 
         } else if (parts[0].equals(Messages.PIECE)) {
@@ -397,6 +401,10 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         } else if (parts[0].equals(Messages.UNLOCK_PLAYER)) {
             player.setIsBeingLocked(false);
         } else if (parts[0].equals(Messages.NO_CONN)) {
+            //Leave room and go back to match screen play menu background music
+            AudioManager.getInstance().stopMusic();
+            AudioManager.getInstance().playMusic("menu_bg", true);
+
             showPopup("Disconnected from the server.", new Runnable() {
                 @Override
                 public void run() {

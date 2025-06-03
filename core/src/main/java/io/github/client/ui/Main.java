@@ -25,7 +25,9 @@ public class Main extends Game {
 
     @Override
     public void create() {
+        // Preload tất cả audio assets
         AudioManager.getInstance().preloadAllAudio();
+        
         matchScreen = new MatchScreen(this);
         setScreen(matchScreen);
 
