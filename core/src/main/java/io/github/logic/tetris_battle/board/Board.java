@@ -10,6 +10,7 @@ import io.github.logic.tetris_battle.helper.CollisionChecker;
 import io.github.client.ui.Main;
 import io.github.logic.utils.Messages;
 import io.github.logic.utils.Side;
+import io.github.logic.utils.AudioManager; 
 
 public class Board {
     private final int ROWS;
@@ -101,11 +102,17 @@ public class Board {
                 }
             }
         }
+        
+        // Play piece drop sound when piece is placed
+        AudioManager.getInstance().playPieceDrop();
+        
         clearFullRows();
         currentRunningPiece = null;
     }
 
     public void clearFullRows() {
+        int clearedRows = 0; // Track number of rows cleared
+        
         for (int i = 0; i < ROWS; i++) {
             boolean fullRow = true;
             for (int j = 0; j < COLS; j++) {
@@ -115,6 +122,8 @@ public class Board {
                 }
             }
             if (fullRow) {
+                clearedRows++; // Increment cleared rows counter
+                
                 for (int k = i; k < ROWS - 1; k++) {
                     grid[k] = grid[k + 1].clone();
                 }
@@ -125,6 +134,12 @@ public class Board {
                 scoreManager.score();
             }
         }
+        
+        // Play line clear sound if any rows were cleared
+        if (clearedRows > 0) {
+            AudioManager.getInstance().playLineClear();
+        }
+        
         scoreManager.resetCombo();
     }
 
@@ -137,6 +152,8 @@ public class Board {
 
         if (!CollisionChecker.getInstance().checkCollision(droppedPiece, this)) {
             currentRunningPiece.drop();
+            // Play piece move sound when piece successfully moves
+            AudioManager.getInstance().playPieceMove();
         } else {
             placePiece(currentRunningPiece);
         }
@@ -151,6 +168,8 @@ public class Board {
 
         if (!CollisionChecker.getInstance().checkCollision(movedPiece, this)) {
             currentRunningPiece.move(dir);
+            // Play piece move sound when piece successfully moves
+            AudioManager.getInstance().playPieceMove();
         }
     }
 
@@ -163,6 +182,8 @@ public class Board {
 
         if (!CollisionChecker.getInstance().checkCollision(rotatedPiece, this)) {
             currentRunningPiece.rotate();
+            // Play piece move sound when piece successfully rotates
+            AudioManager.getInstance().playPieceMove();
         }
     }
 

@@ -2,6 +2,7 @@ package io.github.logic.tetris_battle.skill;
 
 import io.github.logic.tetris_battle.Player;
 import io.github.client.ui.Main;
+import io.github.logic.utils.AudioManager;
 import io.github.logic.utils.Messages;
 import io.github.logic.utils.SkillConfigs;
 
@@ -43,6 +44,8 @@ public class LockOpponentSkill extends Skill {
         if (canActivate()) {
             active = true;
             activeTimer = getEffectingTime();
+            // Play skill activation sound
+            AudioManager.getInstance().playSkillActivate();
             if (player!= null) {
                 player.setIsBeingLocked(true);
             } else {

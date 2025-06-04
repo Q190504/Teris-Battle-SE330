@@ -1,6 +1,7 @@
 package io.github.logic.tetris_battle.skill;
 
 import io.github.logic.tetris_battle.score.ScoreManager;
+import io.github.logic.utils.AudioManager;
 import io.github.logic.utils.SkillConfigs;
 
 public class ExtraPointsSkill extends Skill {
@@ -34,6 +35,8 @@ public class ExtraPointsSkill extends Skill {
         if (canActivate()) {
             active = true;
             activeTimer = getEffectingTime();
+            // Play skill activation sound
+            AudioManager.getInstance().playSkillActivate();
             scoreManager.setDoubleDamage(true);
         }
     }

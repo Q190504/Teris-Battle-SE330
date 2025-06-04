@@ -1,6 +1,7 @@
 package io.github.logic.utils;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
@@ -20,6 +21,27 @@ public class UIFactory {
     }
 
     public static TextButton createTextButton(String text, ClickListener listener) {
+        TextButton button = new TextButton(text, skin);
+        button.pad(20);
+
+        // Add default click listener that plays sound
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Play button click sound for all buttons by default
+                AudioManager.getInstance().playButtonClick();
+            }
+        });
+
+        // Add the custom listener if provided
+        if (listener != null) {
+            button.addListener(listener);
+        }
+        return button;
+    }
+
+    // Alternative method for when you want to control audio manually
+    public static TextButton createTextButtonNoAudio(String text, ClickListener listener) {
         TextButton button = new TextButton(text, skin);
         button.pad(20);
 
@@ -53,10 +75,19 @@ public class UIFactory {
         dialog.getContentTable().add(messageLabel).width(500).pad(20).center();
         dialog.getContentTable().row();
 
-        // Button styling
+        // Button styling with audio
         TextButton button = new TextButton(action, skin);
         button.getLabel().setColor(AppColors.BUTTON_TEXT);
         button.setColor(AppColors.BUTTON_BG_CYAN);
+        
+        // Add click sound to dialog button
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                AudioManager.getInstance().playButtonClick();
+            }
+        });
+        
         dialog.button(button, action);
 
         // Padding and layout
@@ -75,8 +106,6 @@ public class UIFactory {
 
         return dialog;
     }
-
-
 
     public static Skin getSkin() {
         return skin;

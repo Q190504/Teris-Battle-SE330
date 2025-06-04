@@ -99,6 +99,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 extraPointBtn[0] = UIFactory.createTextButton(extraPointSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (extraPointBtn[0].isDisabled()) return;
                         player.useSkill(extraPointSkill);
                     }
@@ -113,6 +115,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 lockOpponentBtn[0] = UIFactory.createTextButton(lockOpponentSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (lockOpponentBtn[0].isDisabled()) return;
                         player.useSkill(lockOpponentSkill);
                     }
@@ -127,6 +131,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 speedBoostBtn[0] = UIFactory.createTextButton(speedBoostSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (speedBoostBtn[0].isDisabled()) return;
                         player.useSkill(speedBoostSkill);
                     }
@@ -151,6 +157,9 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         leaveRoomBtn = UIFactory.createTextButton("LEAVE", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Play button click sound
+                AudioManager.getInstance().playButtonClick();
+                
                 Main.client.send(Messages.LEAVE);
 
                 //Leave room and go back to match screen play menu background music
