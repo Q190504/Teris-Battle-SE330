@@ -106,6 +106,8 @@ public class Board {
     }
 
     public void clearFullRows() {
+        int clearedRows = 0;
+
         for (int i = 0; i < ROWS; i++) {
             boolean fullRow = true;
             for (int j = 0; j < COLS; j++) {
@@ -114,19 +116,33 @@ public class Board {
                     break;
                 }
             }
+
             if (fullRow) {
+                clearedRows++;
+                // Shift rows down
                 for (int k = i; k < ROWS - 1; k++) {
                     grid[k] = grid[k + 1].clone();
                 }
+
+                // Reset top row
                 grid[ROWS - 1] = new int[COLS];
                 for (int j = 0; j < COLS; j++) {
                     grid[ROWS - 1][j] = -1;
                 }
-                scoreManager.score();
+                i--;
             }
         }
-        scoreManager.resetCombo();
+
+        // Apply score and combo based on how many were cleared
+        if (clearedRows > 0) {
+            for (int i = 0; i < clearedRows; i++) {
+                scoreManager.score(); // Add score for each row
+            }
+        } else {
+            scoreManager.resetCombo();
+        }
     }
+
 
     public void dropPiece() {
         if (currentRunningPiece == null || isFull) {

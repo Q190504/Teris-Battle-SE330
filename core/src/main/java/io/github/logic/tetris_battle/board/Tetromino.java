@@ -199,22 +199,19 @@ public class Tetromino {
     }
 
     public void draw(SpriteBatch batch, int posX, int posY, int rows) {
-        StringBuilder shapeLog = new StringBuilder("Drawing piece with shape:\n");
-        for (int i = 0; i < shape.size; i++) {
-            shapeLog.append("[");
-            for (int j = 0; j < shape.get(i).length; j++) {
-                shapeLog.append(shape.get(i)[j]);
-                if (j < shape.get(i).length - 1) shapeLog.append(", ");
-            }
-            shapeLog.append("]\n");
-        }
-        //Gdx.app.log("Draw", shapeLog.toString());
-
         for (int i = 0; i < shape.size; i++) {
             for (int j = 0; j < shape.get(i).length; j++) {
                 if (shape.get(i)[j] == 1) {
+                    int drawRow = row + i;
+                    int drawCol = col + j;
+
+                    // Skip if the block is above the board or below it
+                    if (drawRow < 0 || drawRow >= rows) {
+                        continue;
+                    }
+
                     Sprite blockSprite = getColorByType(this.type);
-                    blockSprite.setPosition((col + j) * 30 + posX, (row + i) * 30 + posY);
+                    blockSprite.setPosition(drawCol * 30 + posX, drawRow * 30 + posY);
                     blockSprite.draw(batch);
                 }
             }
