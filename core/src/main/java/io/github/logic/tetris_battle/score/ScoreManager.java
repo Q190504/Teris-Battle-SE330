@@ -10,7 +10,7 @@ public class ScoreManager {
     private static final float BASE_SCORE = 5;
     private static final float COMBO_MULTI = 1.5f;
     private boolean doubleDamage = false;
-
+    private float totalScore = 0;
     public ScoreManager(Side side, HealthBar healthBar) {
         this.side = side;
         this.combo = 0;
@@ -31,6 +31,7 @@ public class ScoreManager {
             }
         }
         combo++;
+        totalScore += score;
     }
 
     public void resetCombo() {
@@ -43,5 +44,9 @@ public class ScoreManager {
 
     public boolean isDoubleDamage() {
         return doubleDamage;
+    }
+
+    public int getScore() {
+        return (int)totalScore;
     }
 }

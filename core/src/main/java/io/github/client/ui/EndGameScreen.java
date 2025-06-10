@@ -19,6 +19,7 @@ public class EndGameScreen extends ScreenAdapter {
 
     private final boolean isWinner;
     private final float duration;
+    private final int score;
 
     private Stage stage;
     private Table table;
@@ -27,6 +28,14 @@ public class EndGameScreen extends ScreenAdapter {
         this.main = main;
         this.isWinner = isWinner;
         this.duration = duration;
+        this.score = -1;
+    }
+
+    public EndGameScreen(Main main, boolean isWinner, float duration, int score) {
+        this.main = main;
+        this.isWinner = isWinner;
+        this.duration = duration;
+        this.score = score;
     }
 
     @Override
@@ -47,7 +56,11 @@ public class EndGameScreen extends ScreenAdapter {
         timeLabel.setFontScale(1.5f);
         timeLabel.setColor(AppColors.SECONDARY_TEXT);
 
-        TextButton playAgainBtn = UIFactory.createTextButton("Return to Match Screen", new ClickListener() {
+        Label scoreLabel = UIFactory.createLabel("Score: " + score);
+        scoreLabel.setFontScale(1.5f);
+        scoreLabel.setColor(AppColors.SECONDARY_TEXT);
+
+        TextButton playAgainBtn = UIFactory.createTextButton("Return", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 main.setScreen(new MatchScreen(main));
@@ -59,6 +72,9 @@ public class EndGameScreen extends ScreenAdapter {
 
         table.add(resultLabel).center().padBottom(30).row();
         table.add(timeLabel).padBottom(30).row();
+        if (score >= 0) {
+            table.add(scoreLabel).padBottom(30).row();
+        }
         table.add(playAgainBtn).width(300).height(50).padBottom(20).row();
 
         stage.addActor(table);
