@@ -121,20 +121,31 @@ public class Board {
                     break;
                 }
             }
+
             if (fullRow) {
                 clearedRows++; // Increment cleared rows counter
-                
+                // Shift rows down
                 for (int k = i; k < ROWS - 1; k++) {
                     grid[k] = grid[k + 1].clone();
                 }
+
+                // Reset top row
                 grid[ROWS - 1] = new int[COLS];
                 for (int j = 0; j < COLS; j++) {
                     grid[ROWS - 1][j] = -1;
                 }
-                scoreManager.score();
+                i--;
             }
         }
-        
+
+        // Apply score and combo based on how many were cleared
+        if (clearedRows > 0) {
+            for (int i = 0; i < clearedRows; i++) {
+                scoreManager.score(); // Add score for each row
+            }
+        } else {
+            scoreManager.resetCombo();
+        }
         // Play line clear sound if any rows were cleared
         if (clearedRows > 0) {
             AudioManager.getInstance().playLineClear();
@@ -142,6 +153,7 @@ public class Board {
         
         scoreManager.resetCombo();
     }
+
 
     public void dropPiece() {
         if (currentRunningPiece == null || isFull) {

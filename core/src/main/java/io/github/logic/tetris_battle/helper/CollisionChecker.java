@@ -43,9 +43,11 @@ public class CollisionChecker {
                     int blockRow = row + i;
                     int blockCol = col + j;
 
-                    if (blockRow < 0 || blockRow >= ROWS || blockCol < 0 || blockCol >= COLS) {
+                    if (blockRow < 0  || blockCol < 0 || blockCol >= COLS) {
                         return true;
                     }
+                    if (blockRow >= ROWS)
+                        continue;
                     if (grid[blockRow][blockCol] != -1) {
                         return true;
                     }

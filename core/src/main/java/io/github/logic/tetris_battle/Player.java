@@ -40,7 +40,7 @@ public class Player {
     }
 
     public int getScore() {
-        return score;
+        return board.getScoreManager().getScore();
     }
 
     public void setScore(int score) {

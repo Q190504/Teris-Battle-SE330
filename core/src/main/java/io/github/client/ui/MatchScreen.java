@@ -131,7 +131,7 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
                 if (singlePlayerBtn.isDisabled()) return;
 
-                main.setScreen(new GameScreen(main, new TetrominoSpawner(), new HealthBar()));
+                main.setScreen(new SinglePlayerGameScreen(main, new TetrominoSpawner()));
             }
         });
         singlePlayerBtn.setColor(AppColors.BUTTON_BG_YELLOW);
