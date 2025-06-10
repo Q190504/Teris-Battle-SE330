@@ -3,9 +3,11 @@ package io.github.client.ui;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import java.util.UUID;
@@ -16,6 +18,7 @@ import io.github.logic.tetris_battle.score.HealthBar;
 import io.github.logic.utils.AppColors;
 import io.github.logic.utils.Messages;
 import io.github.logic.utils.UIFactory;
+import io.github.logic.utils.AudioManager;
 
 public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
 
@@ -30,8 +33,10 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
     private TextButton createBtn;
     private TextButton joinBtn;
     private TextButton singlePlayerBtn;
+    private TextButton audioSettingsBtn;
 
     private Dialog dialog;
+    private Dialog audioDialog;
 
     public MatchScreen(Main main) {
         this.main = main;
@@ -135,6 +140,16 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         singlePanel.add(singleLabel).center().row();
         singlePanel.add(singlePlayerBtn).width(300).height(40).padTop(10).row();
 
+        // Audio Settings Button
+        audioSettingsBtn = UIFactory.createTextButton("Audio Settings", new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                showAudioSettingsPopup();
+            }
+        });
+        audioSettingsBtn.setColor(AppColors.BUTTON_BG_CYAN);
+        audioSettingsBtn.getLabel().setColor(AppColors.BUTTON_TEXT);
+
         // Status label
         statusLabel = UIFactory.createLabel("");
         statusLabel.setWrap(true);
@@ -144,10 +159,173 @@ public class MatchScreen extends ScreenAdapter implements HandleMessageScreen {
         table.add(titleLabel).center().padBottom(40).row();
         table.add(nameField).width(300).height(40).padBottom(30).row();
         table.add(onlinePanel).padBottom(30).row();
-        table.add(singlePanel).padBottom(30).row();
+        table.add(singlePanel).padBottom(20).row();
+        table.add(audioSettingsBtn).width(300).height(40).padBottom(30).row();
         table.add(statusLabel).width(400).height(40);
 
         stage.addActor(table);
+    }
+
+    private void showAudioSettingsPopup() {
+        if (audioDialog != null) {
+            audioDialog.hide();
+        }
+
+        AudioManager audioManager = AudioManager.getInstance();
+        
+        audioDialog = new Dialog("Audio Settings", UIFactory.getSkin()) {
+            @Override
+            protected void result(Object object) {
+                if ("CLOSE".equals(object)) {
+                    audioManager.saveSettings();
+                }
+            }
+        };
+
+        // Title styling
+        audioDialog.getTitleLabel().setColor(AppColors.TITLE);
+        audioDialog.getTitleLabel().setFontScale(1.2f);
+
+        Table contentTable = audioDialog.getContentTable();
+        contentTable.pad(20);
+        contentTable.defaults().pad(8);
+
+        // Master Volume
+        Label masterLabel = UIFactory.createLabel("MASTER VOLUME");
+        masterLabel.setColor(AppColors.MULTIPLAYER_LABEL);
+        masterLabel.setFontScale(0.9f);
+        
+        final Slider masterSlider = new Slider(0f, 1f, 0.01f, false, UIFactory.getSkin());
+        masterSlider.setValue(audioManager.getMasterVolume());
+        
+        final Label masterValueLabel = UIFactory.createLabel(Math.round(audioManager.getMasterVolume() * 100) + "%");
+        masterValueLabel.setColor(AppColors.TEXT_FIELD);
+        
+        final CheckBox masterMuteBox = new CheckBox(" MUTE", UIFactory.getSkin());
+        masterMuteBox.setChecked(audioManager.isMasterMuted());
+        masterMuteBox.getLabel().setColor(AppColors.BUTTON_TEXT);
+
+        // Music Volume
+        Label musicLabel = UIFactory.createLabel("MUSIC VOLUME");
+        musicLabel.setColor(AppColors.MULTIPLAYER_LABEL);
+        musicLabel.setFontScale(0.9f);
+        
+        final Slider musicSlider = new Slider(0f, 1f, 0.01f, false, UIFactory.getSkin());
+        musicSlider.setValue(audioManager.getMusicVolume());
+        
+        final Label musicValueLabel = UIFactory.createLabel(Math.round(audioManager.getMusicVolume() * 100) + "%");
+        musicValueLabel.setColor(AppColors.TEXT_FIELD);
+        
+        final CheckBox musicMuteBox = new CheckBox(" MUTE", UIFactory.getSkin());
+        musicMuteBox.setChecked(audioManager.isMusicMuted());
+        musicMuteBox.getLabel().setColor(AppColors.BUTTON_TEXT);
+
+        // SFX Volume
+        Label sfxLabel = UIFactory.createLabel("SFX VOLUME");
+        sfxLabel.setColor(AppColors.MULTIPLAYER_LABEL);
+        sfxLabel.setFontScale(0.9f);
+        
+        final Slider sfxSlider = new Slider(0f, 1f, 0.01f, false, UIFactory.getSkin());
+        sfxSlider.setValue(audioManager.getSfxVolume());
+        
+        final Label sfxValueLabel = UIFactory.createLabel(Math.round(audioManager.getSfxVolume() * 100) + "%");
+        sfxValueLabel.setColor(AppColors.TEXT_FIELD);
+        
+        final CheckBox sfxMuteBox = new CheckBox(" MUTE", UIFactory.getSkin());
+        sfxMuteBox.setChecked(audioManager.isSfxMuted());
+        sfxMuteBox.getLabel().setColor(AppColors.BUTTON_TEXT);
+
+        // Add listeners for real-time updates
+        masterSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                float value = masterSlider.getValue();
+                audioManager.setMasterVolume(value);
+                masterValueLabel.setText(Math.round(value * 100) + "%");
+            }
+        });
+
+        masterMuteBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audioManager.setMasterMuted(masterMuteBox.isChecked());
+            }
+        });
+
+        musicSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                float value = musicSlider.getValue();
+                audioManager.setMusicVolume(value);
+                musicValueLabel.setText(Math.round(value * 100) + "%");
+            }
+        });
+
+        musicMuteBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audioManager.setMusicMuted(musicMuteBox.isChecked());
+            }
+        });
+
+        sfxSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                float value = sfxSlider.getValue();
+                audioManager.setSfxVolume(value);
+                sfxValueLabel.setText(Math.round(value * 100) + "%");
+            }
+        });
+
+        sfxMuteBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audioManager.setSfxMuted(sfxMuteBox.isChecked());
+            }
+        });
+
+        // Layout the controls
+        contentTable.add(masterLabel).left().colspan(3).padBottom(5).row();
+        contentTable.add(masterSlider).width(200).padRight(10);
+        contentTable.add(masterValueLabel).width(50).padRight(10);
+        contentTable.add(masterMuteBox).left().row();
+        
+        contentTable.add(new Label("", UIFactory.getSkin())).height(10).colspan(3).row(); // Spacer
+        
+        contentTable.add(musicLabel).left().colspan(3).padBottom(5).row();
+        contentTable.add(musicSlider).width(200).padRight(10);
+        contentTable.add(musicValueLabel).width(50).padRight(10);
+        contentTable.add(musicMuteBox).left().row();
+        
+        contentTable.add(new Label("", UIFactory.getSkin())).height(10).colspan(3).row(); // Spacer
+        
+        contentTable.add(sfxLabel).left().colspan(3).padBottom(5).row();
+        contentTable.add(sfxSlider).width(200).padRight(10);
+        contentTable.add(sfxValueLabel).width(50).padRight(10);
+        contentTable.add(sfxMuteBox).left().row();
+
+        // Close button
+        TextButton closeButton = UIFactory.createTextButton("CLOSE", null);
+        closeButton.setColor(AppColors.BUTTON_BG_MAGENTA);
+        closeButton.getLabel().setColor(AppColors.BUTTON_TEXT);
+        
+        audioDialog.button(closeButton, "CLOSE");
+
+        // Dialog styling
+        audioDialog.getButtonTable().padTop(20).padBottom(20);
+        audioDialog.setModal(true);
+        audioDialog.setMovable(false);
+        audioDialog.setResizable(false);
+        audioDialog.setColor(AppColors.PANEL_BG);
+
+        // Pack and center
+        audioDialog.pack();
+        audioDialog.setPosition(
+            (Gdx.graphics.getWidth() - audioDialog.getWidth()) / 2f,
+            (Gdx.graphics.getHeight() - audioDialog.getHeight()) / 2f
+        );
+
+        audioDialog.show(stage);
     }
 
     @Override

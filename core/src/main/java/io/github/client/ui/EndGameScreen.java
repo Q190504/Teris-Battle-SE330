@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import io.github.logic.tetris_battle.GameScreen;
 import io.github.logic.utils.AppColors;
 import io.github.logic.utils.UIFactory;
+import io.github.logic.utils.AudioManager;
 
 public class EndGameScreen extends ScreenAdapter {
 
@@ -40,6 +41,14 @@ public class EndGameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        // Stop current music and play appropriate end game music
+        AudioManager.getInstance().stopMusic();
+        if (isWinner) {
+            AudioManager.getInstance().playVictoryMusic();
+        } else {
+            AudioManager.getInstance().playDefeatMusic();
+        }
+
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
@@ -63,6 +72,10 @@ public class EndGameScreen extends ScreenAdapter {
         TextButton playAgainBtn = UIFactory.createTextButton("Return", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Stop current music and play menu music when returning to match screen
+                AudioManager.getInstance().stopMusic();
+                AudioManager.getInstance().playMenuMusic();
+
                 main.setScreen(new MatchScreen(main));
             }
         });

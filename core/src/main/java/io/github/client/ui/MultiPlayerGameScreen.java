@@ -15,7 +15,6 @@ import io.github.logic.data.PlayerState;
 import io.github.logic.data.TetrominoDTO;
 import io.github.logic.tetris_battle.Player;
 import io.github.logic.utils.*;
-import io.github.logic.utils.AudioManager.AudioCategory;
 import io.github.logic.tetris_battle.board.Board;
 import io.github.logic.tetris_battle.board.Tetromino;
 import io.github.logic.tetris_battle.score.HealthBar;
@@ -100,6 +99,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 extraPointBtn[0] = UIFactory.createTextButton(extraPointSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (extraPointBtn[0].isDisabled()) return;
                         player.useSkill(extraPointSkill);
                     }
@@ -114,6 +115,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 lockOpponentBtn[0] = UIFactory.createTextButton(lockOpponentSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (lockOpponentBtn[0].isDisabled()) return;
                         player.useSkill(lockOpponentSkill);
                     }
@@ -128,6 +131,8 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
                 speedBoostBtn[0] = UIFactory.createTextButton(speedBoostSkill.getName(), new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
+                        // Play button click sound
+                        AudioManager.getInstance().playButtonClick();
                         if (speedBoostBtn[0].isDisabled()) return;
                         player.useSkill(speedBoostSkill);
                     }
@@ -152,6 +157,9 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         leaveRoomBtn = UIFactory.createTextButton("LEAVE", new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Play button click sound
+                AudioManager.getInstance().playButtonClick();
+                
                 Main.client.send(Messages.LEAVE);
 
                 //Leave room and go back to match screen play menu background music
@@ -379,6 +387,11 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
 
         } else if (parts[0].equals(Messages.PLAYER_LEFT)) {
             Main.client.send(Messages.LEAVE);
+
+            //Leave room and go back to match screen play menu background music
+            AudioManager.getInstance().stopMusic();
+            AudioManager.getInstance().playMusic("menu_bg", true);
+
             showPopup("Opponent has left the game!", "LEAVE", () -> main.setScreen(new MatchScreen(main)));
 
         } else if (parts[0].equals(Messages.PIECE)) {
@@ -397,6 +410,10 @@ public class MultiPlayerGameScreen implements Screen, InputProcessor, HandleMess
         } else if (parts[0].equals(Messages.UNLOCK_PLAYER)) {
             player.setIsBeingLocked(false);
         } else if (parts[0].equals(Messages.NO_CONN)) {
+            //Leave room and go back to match screen play menu background music
+            AudioManager.getInstance().stopMusic();
+            AudioManager.getInstance().playMusic("menu_bg", true);
+
             showPopup("Disconnected from the server.", new Runnable() {
                 @Override
                 public void run() {

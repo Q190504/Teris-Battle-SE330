@@ -2,6 +2,7 @@ package io.github.logic.tetris_battle.skill;
 
 import io.github.logic.tetris_battle.Player;
 import io.github.logic.utils.SkillConfigs;
+import io.github.logic.utils.AudioManager;
 
 public class SpeedBoostSkill extends Skill {
 
@@ -41,6 +42,8 @@ public class SpeedBoostSkill extends Skill {
         if (canActivate()) {
             active = true;
             activeTimer = getEffectingTime(); // Set timer để đếm ngược
+            // Play skill activation sound
+            AudioManager.getInstance().playSkillActivate();
             // Skill is now active, player can use SPACE to drop pieces quickly
         }
     }
